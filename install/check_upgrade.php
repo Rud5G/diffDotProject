@@ -37,16 +37,20 @@ The full text of the GPL is in the COPYING file.
 // 4. Combination of 2 and 3
 // 5. It is an upgrade - there must be a config.php and a database.
 
-global $baseDir;
-
-require_once 'install.inc.php';
 $baseDir = dirname(dirname(__FILE__));
-require_once "$baseDir/lib/adodb/adodb.inc.php";
+define('DP_BASE_DIR', $baseDir);
+
+require_once DP_BASE_DIR . '/includes/dP_compat.php';
+require_once 'install.inc.php';
+require_once DP_BASE_DIR.'/lib/adodb/adodb.inc.php';
 
 function dPcheckExistingDB($conf) {
 	global $AppUI, $ADODB_FETCH_MODE;
 	$AppUI = new InstallerUI;
-	
+
+	if (isset($conf['dbprefix'])) {
+		$dbprefix = $conf['dbprefix'];
+	} else $dbprefix = '';
 	$ado = @NewADOConnection($conf['dbtype'] ? $conf['dbtype'] : 'mysql');
 	if (empty($ado))
 		return false;
@@ -57,14 +61,53 @@ function dPcheckExistingDB($conf) {
 	if (! $exists)
 		return false;
 
+	// Find the tables in the database, if there are none, or if the
+	// basic tables of project and task are missing, we are doing an
+	// install.
+
+	$table_list = $ado->MetaTables('TABLE',$conf['dbname'],$dbprefix.'%');
+	if (count($table_list) < 10) {
+		// There are now more than 60 tables in a standard dP
+		// install, but this will at least cover the basics.
+		return false;
+	}
+
+	// Check the table list for the standard tables.  Firstly
+	// we check for sysvals and tasks, and see if there is a common
+	// prefix.
+	$found = false;
+	foreach ($table_list as $tbl) {
+		if (substr($tbl, -7) == 'sysvals') {
+			/*
+				The $prefix should be compared to the one taken from the dbprefix configuration variable $dbprefix, 
+				since with a prefix we could conceivably have more than 1 dotproject apps in the db but with
+				different prefixes (or some other app which uses a table named sysvals)
+			 */
+			$prefix = str_replace('sysvals', '', $tbl);
+			if ($dbprefix == $prefix) { // Our prefix
+				$found = true;
+				break;
+			}
+		}
+	}
+	if (! $found) {
+		return false; //Couldn't even find the projects table!
+	}
+	if (!in_array($prefix . 'tasks', $table_list)) {
+		return false; // Must have both tasks and projects.
+		// we could go further but it is likely that if these
+		// exist then we can safely upgrade.
+	}
+
+
 	// Now we make a check to see if the dotproject.sql has been loaded
 	// prior to the installer being run.  This needs to rely on the
 	// fact that the GACL tables will exist but will be unpopulated.
 	// The install procedure populates them - If this situation changes
 	// then this code must be modified to suit.
 
-	$q1 = 'SELECT count(*) from gacl_phpgacl'; // Should be 2
-	$q2 = 'SELECT count(*) from gacl_axo'; // Should be greater than the count of modules
+	$q1 = 'SELECT count(*) from '.$dbprefix.'gacl_phpgacl'; // Should be 2
+	$q2 = 'SELECT count(*) from '.$dbprefix.'gacl_axo'; // Should be greater than the count of modules
 
 	$ADODB_FETCH_MODE = ADODB_FETCH_NUM;
 
@@ -73,9 +116,9 @@ function dPcheckExistingDB($conf) {
 	// If one exists and is populated (the version information is seeded by the sql file)
 	// but the other either doesn't exist or is unpopulated, then it is an install as
 	// the SQL file has been loaded manually.
-	if (($qid = @$ado->Execute($q1) ) && ($q1Data = @$qid->fetchRow() ) && ! empty($q1Data[0]) ) {
+	if (($qid = @$ado->Execute($q1)) && ($q1Data = @$qid->fetchRow()) && ! empty($q1Data[0])) {
 		@$qid->Close();
-		if ( ! ($qid2 = @$ado->Execute($q2) ) || ! ($q2Data = @$qid2->fetchRow() ) || empty($q2Data[0]) ) {
+		if (! ($qid2 = @$ado->Execute($q2)) || ! ($q2Data = @$qid2->fetchRow()) || empty($q2Data[0])) {
 			return false;
 		}
 		@$qid2->Close();

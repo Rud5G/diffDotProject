@@ -10,8 +10,8 @@ eval 'exec perl -w -x $0 ${1+"$@"}'
 ###                                                        ###
 ##############################################################
 
-## $Revision: 1.1 $
-## $Date: 2003/01/10 15:56:38 $
+## $Revision: 527 $
+## $Date: 2003-01-11 02:56:42 +1100 (Sat, 11 Jan 2003) $
 ## $Author: kripper $
 ##
 ##   (C) 2001,2002 Martyn J. Pearce <fluffy@cpan.org>
@@ -81,7 +81,7 @@ use File::Basename;
 my $Log_Source_Command = "cvs log";
 
 # In case we have to print it out:
-my $VERSION = '$Revision: 1.1 $';
+my $VERSION = '$Revision: 527 $';
 $VERSION =~ s/\S+\s+(\S+)\s+\S+/$1/;
 
 ## Vars set by options:

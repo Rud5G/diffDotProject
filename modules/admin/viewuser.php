@@ -1,46 +1,51 @@
-<?php /* ADMIN $Id: viewuser.php,v 1.39.4.3 2006/03/07 22:16:02 gregorerhardt Exp $ */
+<?php /* ADMIN $Id: viewuser.php 6107 2010-12-31 05:04:59Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
+
 GLOBAL $addPwT,$company_id, $dept_ids, $department, $min_view, $m, $a;
-$user_id = isset( $_GET['user_id'] ) ? $_GET['user_id'] : 0;
+$user_id = intval(dPgetParam($_GET, 'user_id', 0));
 
 if ($user_id != $AppUI->user_id 
-&& ( ! $perms->checkModuleItem('admin', 'view', $user_id) 
-|| ! $perms->checkModuleItem('users', 'view', $user_id) ) )
+&& (! getPermission('admin', 'view', $user_id) 
+|| ! getPermission('users', 'view', $user_id)))
 	$AppUI->redirect('m=public&a=access_denied');
 
 $AppUI->savePlace();
 
-if (isset( $_POST['show_form'] )) {
-	$add_pwt = dPgetParam($_POST, 'add_pwt', 0 );
-	$AppUI->setState( 'addProjWithTasks', $add_pwt);	
+if (isset($_POST['show_form'])) {
+	$add_pwt = dPgetParam($_POST, 'add_pwt', 0);
+	$AppUI->setState('addProjWithTasks', $add_pwt);
 } else {
-	$AppUI->setState( 'addProjWithTasks', true);
+	$AppUI->setState('addProjWithTasks', false);
 }
-$addPwT = $AppUI->getState( 'addProjWithTasks' ) ? $AppUI->getState( 'addProjWithTasks' ) : 0;
 
-$company_id = $AppUI->getState( 'UsrProjIdxCompany' ) !== NULL ? $AppUI->getState( 'UsrProjIdxCompany' ) : $AppUI->user_company;
+$addPwT = $AppUI->getState('addProjWithTasks') ? $AppUI->getState('addProjWithTasks') : 0;
+
+$company_id = $AppUI->getState('UsrProjIdxCompany') !== NULL ? $AppUI->getState('UsrProjIdxCompany') : $AppUI->user_company;
 
 $company_prefix = 'company_';
 
-if (isset( $_POST['department'] )) {
-	$AppUI->setState( 'UsrProjIdxDepartment', $_POST['department'] );
+if (isset($_POST['department'])) {
+	$AppUI->setState('UsrProjIdxDepartment', $_POST['department']);
 	
 	//if department is set, ignore the company_id field
 	unset($company_id);
 }
-$department = $AppUI->getState( 'UsrProjIdxDepartment' ) !== NULL ? $AppUI->getState( 'UsrProjIdxDepartment' ) : $company_prefix.$AppUI->user_company;
+$department = $AppUI->getState('UsrProjIdxDepartment') !== NULL ? $AppUI->getState('UsrProjIdxDepartment') : $company_prefix.$AppUI->user_company;
 
 //if $department contains the $company_prefix string that it's requesting a company and not a department.  So, clear the 
 // $department variable, and populate the $company_id variable.
-if(!(strpos($department, $company_prefix)===false)){
-	$company_id = substr($department,strlen($company_prefix));
-	$AppUI->setState( 'UsrProjIdxCompany', $company_id );
+if (!(mb_strpos($department, $company_prefix)===false)) {
+	$company_id = mb_substr($department,mb_strlen($company_prefix));
+	$AppUI->setState('UsrProjIdxCompany', $company_id);
 	unset($department);
 }
 
-if (isset( $_GET['tab'] )) {
-	$AppUI->setState( 'UserVwTab', $_GET['tab'] );
+if (isset($_GET['tab'])) {
+	$AppUI->setState('UserVwTab', $_GET['tab']);
 }
-$tab = $AppUI->getState( 'UserVwTab' ) !== NULL ? $AppUI->getState( 'UserVwTab' ) : 0;
+$tab = $AppUI->getState('UserVwTab') !== NULL ? $AppUI->getState('UserVwTab') : 0;
 
 // pull data
 $q  = new DBQuery;
@@ -54,28 +59,33 @@ $q->addWhere('u.user_id = '.$user_id);
 $sql = $q->prepare();
 $q->clear();
 
-if (!db_loadHash( $sql, $user )) {
-	$titleBlock = new CTitleBlock( 'Invalid User ID', 'helix-setup-user.png', $m, "$m.$a" );
-	$titleBlock->addCrumb( "?m=admin", "users list" );
+if (!db_loadHash($sql, $user)) {
+	$titleBlock = new CTitleBlock('Invalid User ID', 'helix-setup-user.png', $m, "$m.$a");
+	$titleBlock->addCrumb('?m=admin', 'users list');
 	$titleBlock->show();
 } else {
 
 // setup the title block
-	$titleBlock = new CTitleBlock( 'View User', 'helix-setup-user.png', $m, "$m.$a" );
+	$titleBlock = new CTitleBlock('View User', 'helix-setup-user.png', $m, "$m.$a");
 	if ($canRead) {
-	  $titleBlock->addCrumb( "?m=admin", "users list" );
+	  $titleBlock->addCrumb('?m=admin', 'users list');
+	}
+	if ($canEdit) {
+		$titleBlock->addCrumb('?m=admin&amp;a=addedituser&amp;user_id=' . $user_id, 
+		                      'edit this user');
 	}
 	if ($canEdit || $user_id == $AppUI->user_id) {
-	      $titleBlock->addCrumb( "?m=admin&a=addedituser&user_id=$user_id", "edit this user" );
-	      $titleBlock->addCrumb( "?m=system&a=addeditpref&user_id=$user_id", "edit preferences" );
-	      $titleBlock->addCrumbRight(
-			'<a href="#" onclick="popChgPwd();return false">' . $AppUI->_('change password') . '</a>'
-	      );
-	      $titleBlock->addCell('<td align="right" width="100%"><input type="button" class=button value="'.$AppUI->_('add user').'" onClick="javascript:window.location=\'./index.php?m=admin&a=addedituser\';" /></td>');
+		$titleBlock->addCrumb('?m=system&amp;a=addeditpref&amp;user_id=' . $user_id, 
+		                      'edit preferences');
+		$titleBlock->addCrumbRight('<a href="#" onclick="popChgPwd();return false">' 
+								   . $AppUI->_('change password') . '</a>');
+		$titleBlock->addCell('<input type="button" class=button value="' . $AppUI->_('add user') 
+		                     . '" onClick="javascript:window.location=\'./index.php' 
+		                     . '?m=admin&amp;a=addedituser\';" />');
 	}
 	$titleBlock->show();
 ?>
-<script language="javascript">
+<script type="text/javascript" language="javascript">
 <?php
 // security improvement:
 // some javascript functions may not appear on client side in case of user not having write permissions
@@ -83,7 +93,7 @@ if (!db_loadHash( $sql, $user )) {
 if ($canEdit || $user_id == $AppUI->user_id) {
 ?>
 function popChgPwd() {
-	window.open( './index.php?m=public&a=chpwd&dialog=1&user_id=<?php echo $user['user_id']; ?>', 'chpwd', 'top=250,left=250,width=350, height=220, scollbars=false' );
+	window.open('./index.php?m=public&a=chpwd&dialog=1&user_id=<?php echo $user['user_id']; ?>', 'chpwd', 'top=250,left=250,width=350, height=220, scrollbars=no');
 }
 <?php } ?>
 </script>
@@ -94,49 +104,55 @@ function popChgPwd() {
 		<table cellspacing="1" cellpadding="2" border="0" width="100%">
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Login Name');?>:</td>
-			<td class="hilite" width="100%"><?php echo $user["user_username"];?></td>
+			<td class="hilite" width="100%"><?php echo $user['user_username'];?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('User Type');?>:</td>
-			<td class="hilite" width="100%"><?php echo $AppUI->_($utypes[$user["user_type"]]);?></td>
+			<td class="hilite" width="100%"><?php echo $AppUI->_($utypes[$user['user_type']]);?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Real Name');?>:</td>
-			<td class="hilite" width="100%"><?php echo $user["contact_first_name"].' '.$user["contact_last_name"];?></td>
+			<td class="hilite" width="100%"><?php echo $user['contact_first_name'].' '.$user['contact_last_name'];?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Company');?>:</td>
 			<td class="hilite" width="100%">
-				<a href="?m=companies&a=view&company_id=<?php echo @$user["contact_company"];?>"><?php echo @$user["company_name"];?></a>
+				<?php
+				if (getPermission('companies', 'access', $user['contact_company'])) {
+					echo '<a href="?m=companies&amp;a=view&amp;company_id=' . $user['contact_company'] . '" title="' . htmlspecialchars($user['company_name'], ENT_QUOTES) . '">' . htmlspecialchars($user['company_name'], ENT_QUOTES) . '</a>';
+				} else {
+					echo htmlspecialchars($user['company_name'], ENT_QUOTES);
+				}
+				?>
 			</td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Department');?>:</td>
 			<td class="hilite" width="100%">
-				<a href="?m=departments&a=view&dept_id=<?php echo @$user["contact_department"];?>"><?php echo $user["dept_name"];?></a>
+				<a href="?m=departments&amp;a=view&amp;dept_id=<?php echo @$user['contact_department'];?>"><?php echo $user['dept_name'];?></a>
 			</td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Phone');?>:</td>
-			<td class="hilite" width="100%"><?php echo @$user["contact_phone"];?></td>
+			<td class="hilite" width="100%"><?php echo @$user['contact_phone'];?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Home Phone');?>:</td>
-			<td class="hilite" width="100%"><?php echo @$user["contact_phone2"];?></td>
+			<td class="hilite" width="100%"><?php echo @$user['contact_phone2'];?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Mobile');?>:</td>
-			<td class="hilite" width="100%"><?php echo @$user["contact_mobile"];?></td>
+			<td class="hilite" width="100%"><?php echo @$user['contact_mobile'];?></td>
 		</tr>
 		<tr valign=top>
 			<td align="right" nowrap><?php echo $AppUI->_('Address');?>:</td>
 			<td class="hilite" width="100%"><?php
-				echo @$user["contact_address1"]
-					.( ($user["contact_address2"]) ? '<br />'.$user["contact_address2"] : '' )
-					.'<br />'.$user["contact_city"]
-					.'&nbsp;&nbsp;'.$user["contact_state"]
-					.'&nbsp;&nbsp;'.$user["contact_zip"]
-					.'<br />'.$user["contact_country"]
+				echo @$user['contact_address1']
+					.(($user['contact_address2']) ? '<br />'.$user['contact_address2'] : '')
+					.'<br />'.$user['contact_city']
+					.'&nbsp;&nbsp;'.$user['contact_state']
+					.'&nbsp;&nbsp;'.$user['contact_zip']
+					.'<br />'.$user['contact_country']
 					;
 			?></td>
 		</tr>
@@ -147,26 +163,26 @@ function popChgPwd() {
 		<table width="100%">
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Birthday');?>:</td>
-			<td class="hilite" width="100%"><?php echo @$user["contact_birthday"];?></td>
+			<td class="hilite" width="100%"><?php echo @$user['contact_birthday'];?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap>ICQ#:</td>
-			<td class="hilite" width="100%"><?php echo @$user["contact_icq"];?></td>
+			<td class="hilite" width="100%"><?php echo @$user['contact_icq'];?></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap>AOL Nick:</td>
-			<td class="hilite" width="100%"><a href="aim:<?php echo @$user["contact_aol"];?>"><?php echo @$user["contact_aol"];?></a></td>
+			<td class="hilite" width="100%"><a href="aim:<?php echo @$user['contact_aol'];?>"><?php echo @$user['contact_aol'];?></a></td>
 		</tr>
 		<tr>
 			<td align="right" nowrap><?php echo $AppUI->_('Email');?>:</td>
-			<td class="hilite" width="100%"><?php echo '<a href="mailto:'.@$user["contact_email"].'">'.@$user["contact_email"].'</a>';?></td>
+			<td class="hilite" width="100%"><?php echo '<a href="mailto:'.@$user['contact_email'].'">'.@$user['contact_email'].'</a>';?></td>
 		</tr>
 		<tr>
 			<td colspan="2"><strong><?php echo $AppUI->_('Signature');?>:</strong></td>
 		</tr>
 		<tr>
 			<td class="hilite" width="100%" colspan="2">
-				<?php echo str_replace( chr(10), "<br />", $user["user_signature"]);?>&nbsp;
+				<?php echo str_replace(chr(10), '<br />', $user['user_signature']);?>&nbsp;
 			</td>
 		</tr>
 		</table>
@@ -175,13 +191,21 @@ function popChgPwd() {
 </table>
 
 <?php
-	// tabbed information boxes
+	// force tabbed information boxes
 	$min_view = true;
-	$tabBox = new CTabBox( "?m=admin&a=viewuser&user_id=$user_id", '', $tab );
+	$oldViewPref = $AppUI->getPref('TABVIEW');
+	$AppUI->setPref('TABVIEW', 1);
+	
+	$tabBox = new CTabBox(('?m=admin&amp;a=viewuser&amp;user_id=' . $user_id), '', $tab);
 	$tabBox->loadExtras('admin', 'viewuser'); 
-	$tabBox->add( $dPconfig['root_dir'].'/modules/admin/vw_usr_log', 'User Log');
-	$tabBox->add( $dPconfig['root_dir'].'/modules/admin/vw_usr_perms', 'Permissions' );
-	$tabBox->add( $dPconfig['root_dir'].'/modules/admin/vw_usr_roles', 'Roles' );
+	$tabBox->add(DP_BASE_DIR.'/modules/admin/vw_usr_log', 'User Log');
+	$tabBox->add(DP_BASE_DIR.'/modules/admin/vw_usr_perms', 'Permissions');
+	$tabBox->add(DP_BASE_DIR.'/modules/admin/vw_usr_roles', 'Roles');
+	if ($canEdit) {
+		$tabBox->add(DP_BASE_DIR.'/modules/admin/vw_usr_transfer', 'Transfer');
+	}
 	$tabBox->show();
+	
+	$AppUI->setPref('TABVIEW', $oldViewPref);
 }
 ?>

@@ -26,7 +26,7 @@
  * @package Smarty
  */
 
-/* $Id: Smarty_Compiler.class.php,v 1.1.1.1 2004/10/15 01:06:24 ajdonnison Exp $ */
+/* $Id: Smarty_Compiler.class.php 2428 2004-10-15 01:04:33Z ajdonnison $ */
 
 /**
  * Template compiling class

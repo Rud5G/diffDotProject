@@ -1,4 +1,7 @@
-<?php /* ROLES $Id: roles.class.php,v 1.2 2004/10/15 01:32:55 ajdonnison Exp $ */
+<?php /* ROLES $Id: roles.class.php 5872 2009-04-25 00:09:56Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
 /**
  * This class abstracts the concept of a user Role, which is, in effect, an ARO
@@ -26,17 +29,17 @@ class CRole {
 	var $role_description = NULL;
 	var $perms = null;
 
-	function CRole( $name='', $description='') {
+	function CRole($name='', $description='') {
 		$this->role_name = $name;
 		$this->role_description = $description;
 		$this->perms =& $GLOBALS['AppUI']->acl();
 	}
 
-	function bind( $hash ) {
-		if (!is_array( $hash )) {
-			return get_class( $this )."::bind failed";
+	function bind($hash) {
+		if (!is_array($hash)) {
+			return get_class($this)."::bind failed";
 		} else {
-			bindHashToObject( $hash, $this );
+			bindHashToObject($hash, $this);
 			return NULL;
 		}
 	}
@@ -48,16 +51,16 @@ class CRole {
 
 	function store() {
 		$msg = $this->check();
-		if( $msg ) {
-			return get_class( $this )."::store-check failed<br />$msg";
+		if ($msg) {
+			return get_class($this)."::store-check failed<br />$msg";
 		}
-		if( $this->role_id ) {
+		if ($this->role_id) {
 			$ret = $this->perms->updateRole($this->role_id, $this->role_name, $this->role_description);
 		} else {
 			$ret = $this->perms->insertRole($this->role_name, $this->role_description);
 		}
-		if( !$ret ) {
-			return get_class( $this )."::store failed";
+		if (!$ret) {
+			return get_class($this)."::store failed";
 		} else {
 			return NULL;
 		}
@@ -71,7 +74,7 @@ class CRole {
 			$this->perms->deleteRole($this->role_id);
 			return null;
 		} else {
-			return get_class( $this)."::delete failed <br/>You do not have permission to delete this role";
+			return get_class($this)."::delete failed <br/>You do not have permission to delete this role";
 		}
 	}
 
@@ -97,12 +100,12 @@ class CRole {
 	
 
 	function rename_array(&$roles, $from, $to) {
-		if ( count($from) != count($to) ) {
+		if (count($from) != count($to)) {
 			return false;
 		}
 		foreach ($roles as $key => $val) {
 			// 4.2 and before return NULL on fail, later returns false.
-			if ( ($k = array_search($k, $from)) !== false && $k !== null ) {
+			if (($k = array_search($k, $from)) !== false && $k !== null) {
 				unset($roles[$key]);
 				$roles[$to[$k]] = $val;
 			}

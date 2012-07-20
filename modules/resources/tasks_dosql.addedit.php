@@ -1,4 +1,7 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
 // Set the pre and post save functions
 global $pre_save, $post_save, $other_resources;
@@ -12,12 +15,10 @@ $other_resources = null;
  * is destroyed.  It can be used to save this data to be used later in
  * the postsave function.
  */
-function resource_presave()
-{
-  global $other_resources;
-  // check to see if we are in the post save list or if we need to
-  // interrogate the session.
-  $other_resources = setItem('hresource_assign');
+function resource_presave() {
+	global $other_resources;
+	//check to see if we are in the post save list or if we need to query the session.
+	$other_resources = dPgetParam($_POST, 'hresource_assign');
 	dprint(__FILE__, __LINE__, 5, "setting other resources to $other_resources");
 }
 
@@ -37,7 +38,7 @@ function resource_postsave()
     foreach ($reslist as $res) {
       if ($res) {
 				list ($resource, $perc) = explode('=', $res);
-				$value[] = array( $task_id, $resource, $perc );
+				$value[] = array($task_id, $resource, $perc);
       }
     }
 		// first delete any elements already there, then replace with this
@@ -48,7 +49,7 @@ function resource_postsave()
 		$q->exec(); 
 		$q->clear();
     if (count($value)) {
-			foreach($value as $v)
+			foreach ($value as $v)
 			{
 				$q->addTable('resource_tasks');
 				$q->addInsert('task_id,resource_id,percent_allocated', $v, true);

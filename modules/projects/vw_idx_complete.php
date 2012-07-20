@@ -1,81 +1,187 @@
-<?php /* PROJECTS $Id: vw_idx_complete.php,v 1.11.6.1 2005/09/14 16:22:20 pedroix Exp $ */
-GLOBAL $AppUI, $projects, $company_id;
-$perms =& $AppUI->acl();
+<?php /* PROJECTS $Id: vw_idx_complete.php 5975 2010-04-10 19:31:45Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
+GLOBAL $AppUI, $projects, $company_id, $pstatus, $project_types, $currentTabId, $currentTabName;
+GLOBAL $priority;
+
 $df = $AppUI->getPref('SHDATEFORMAT');
+
+$editProjectsAllowed = getPermission('projects', 'edit');
+foreach ($projects as $row) {
+	$editProjectsAllowed = (($editProjectsAllowed) 
+	                        || getPermission('projects', 'edit', $row['project_id']));
+}
+
+$base_table_cols = 6;
+$table_cols = $base_table_cols + (($editProjectsAllowed) ? 1 : 0);
+$added_cols = $table_cols - $base_table_cols;
 ?>
 
+<form action='./index.php' method='get'>
 <table width="100%" border="0" cellpadding="3" cellspacing="1" class="tbl">
 <tr>
-	<td align="right" width="65" nowrap="nowrap">&nbsp;<?php echo $AppUI->_('sort by');?>:&nbsp;</td>
+	<td colspan="<?php echo ($base_table_cols); ?>" nowrap="nowrap">
+		<?php echo $AppUI->_('sort by'); ?>:
+	</td>
+<?php 
+if ($added_cols) {
+?>
+	<td colspan="<?php echo ($added_cols); ?>" nowrap="nowrap">&nbsp;</td>
+<?php 
+}
+?>
 </tr>
 <tr>
-        <th nowrap="nowrap">
-                <a href="?m=projects&orderby=project_color_identifier" class="hdr"><?php echo $AppUI->_('Color');?></a>
-        </th>
 	<th nowrap="nowrap">
-		<a href="?m=projects&orderby=company_name" class="hdr"><?php echo $AppUI->_('Company');?></a>
+		<a href="?m=projects&amp;orderby=project_color_identifier" class="hdr">
+		<?php echo $AppUI->_('Color');?>
+		</a>
+		(<a href="?m=projects&amp;orderby=project_percent_complete" class="hdr">%</a>)
 	</th>
 	<th nowrap="nowrap">
-		<a href="?m=projects&orderby=project_name" class="hdr"><?php echo $AppUI->_('Project Name');?></a>
+		<a href="?m=projects&amp;orderby=company_name" class="hdr">
+		<?php echo $AppUI->_('Company');?>
+		</a>
 	</th>
 	<th nowrap="nowrap">
-		<a href="?m=projects&orderby=user_username" class="hdr"><?php echo $AppUI->_('Owner');?></a>
+		<a href="?m=projects&amp;orderby=project_name" class="hdr">
+		<?php echo $AppUI->_('Project Name');?>
+		</a>
 	</th>
 	<th nowrap="nowrap">
-		<a href="?m=projects&orderby=total_tasks" class="hdr"><?php echo $AppUI->_('Tasks');?></a>
-		<a href="?m=projects&orderby=my_tasks class="hdr">(<?php echo $AppUI->_('My');?>)</a>
+		<a href="?m=projects&amp;orderby=user_username" class="hdr">
+		<?php echo $AppUI->_('Owner');?>
+		</a>
 	</th>
 	<th nowrap="nowrap">
-		<a href="?m=projects&orderby=project_end_date" class="hdr"><?php echo $AppUI->_('Due Date');?>:</a>
+		<a href="?m=projects&amp;orderby=total_tasks" class="hdr"><?php echo $AppUI->_('Tasks');?></a>
+		<a href="?m=projects&amp;orderby=my_tasks" class="hdr">(<?php echo $AppUI->_('My');?>)</a>
 	</th>
+	<th nowrap="nowrap">
+		<a href="?m=projects&amp;orderby=project_end_date" class="hdr">
+		<?php echo $AppUI->_('Due Date');?>
+		</a>
+	</th>
+<?php 
+if ($editProjectsAllowed) {
+?>
+	<th nowrap="nowrap">
+		<?php echo $AppUI->_('Selection'); ?>
+	</th>
+<?php 
+}
+?>
 </tr>
 
-<?php
+<?php 
 $CR = "\n";
 $CT = "\n\t";
 $none = true;
 foreach ($projects as $row) {
-	if (! $perms->checkModuleItem('projects', 'view', $row['project_id']))
+	if (! getPermission('projects', 'view', $row['project_id'])) {
 		continue;
-	if ($row["project_active"] > 0 && $row["project_status"] == 5) {
-		$none = false;
-		$end_date = intval( @$row["project_end_date"] ) ? new CDate( $row["project_end_date"] ) : null;
-
-		$s = '<tr>';
-		$s .= '<td width="65" align="center" style="border: outset #eeeeee 2px;background-color:#'
-			. $row["project_color_identifier"] . '">';
-		$s .= $CT . '<font color="' . bestColor( $row["project_color_identifier"] ) . '">'
-			. sprintf( "%.1f%%", $row["project_percent_complete"] )
-			. '</font>';
-		$s .= $CR . '</td>';
-
-		$s .= $CR . '<td width="30%">';
-		if ($perms->checkModuleItem('companies', 'access', $row['project_company'])) {
-			$s .= $CT . '<a href="?m=companies&a=view&company_id=' . $row["project_company"] . '" title="' . htmlspecialchars( $row["company_description"], ENT_QUOTES ) . '">' . htmlspecialchars( $row["company_name"], ENT_QUOTES ) . '</a>';
-		} else {
-			$s .= $CT . htmlspecialchars( $row["company_name"], ENT_QUOTES );
-		}
-		$s .= $CR . '</td>';
-
-		$s .= $CR . '<td width="100%">';
-		$s .= $CT . '<a href="?m=projects&a=view&project_id=' . $row["project_id"] . '" title="' . htmlspecialchars( $row["project_description"], ENT_QUOTES ) . '">' . htmlspecialchars( $row["project_name"], ENT_QUOTES ) . '</a>';
-		$s .= $CR . '</td>';
-		$s .= $CR . '<td nowrap="nowrap">' . htmlspecialchars( $row["user_username"], ENT_QUOTES ) . '</td>';
-		$s .= $CR . '<td align="center" nowrap="nowrap">';
-		$s .= $CT . $row["total_tasks"] . ($row["my_tasks"] ? ' ('.$row["my_tasks"].')' : '');
-		$s .= $CR . '</td>';
-		$s .= $CR . '<td align="right" nowrap="nowrap">';
-		$s .= $CT . ($end_date ? $end_date->format( $df ) : '-');
-		$s .= $CR . '</td>';
-		$s .= $CR . '</tr>';
-		echo $s;
 	}
-}
-if ($none) {
-	echo $CR . '<tr><td colspan="6">' . $AppUI->_( 'No projects available' ) . '</td></tr>';
-}
+	if ($row['project_status'] == 5) {
+		$none = false;
+		$end_date = ((intval(@$row['project_end_date'])) 
+		             ? new CDate($row['project_end_date']) : null);
 ?>
 <tr>
-	<td colspan="6">&nbsp;</td>
+	<td width="65" align="center" style="border: outset #eeeeee 2px;background-color:#<?php 
+echo ($row['project_color_identifier']); ?>">
+		<span style="color:<?php echo (bestColor($row['project_color_identifier'])); ?>">
+		<?php echo(sprintf('%.1f%%', $row['project_percent_complete'])); ?>
+		</span>
+	</td>
+	<td width="30%">
+<?php 
+		$allowedProjComp = getPermission('companies', 'access', $row['project_company']);
+		if ($allowedProjComp) {
+?>
+		<a href="?m=companies&amp;a=view&amp;company_id=<?php 
+echo htmlspecialchars($row['project_company']); ?>" title="<?php 
+echo htmlspecialchars($row['company_description'], ENT_QUOTES); ?>">
+<?php 
+		}
+		echo (htmlspecialchars($row['company_name'], ENT_QUOTES));
+		if ($allowedProjComp) {
+?>
+		</a>
+<?php 
+		}
+?>
+	</td>
+	<td width="100%">
+		<a href="?m=projects&amp;a=view&amp;project_id=<?php 
+echo htmlspecialchars($row['project_id']); ?>" <?php
+if (!empty($row['project_description'])) { ?>onmouseover="return overlib('<?php 
+echo(htmlspecialchars(('<div><p>' . str_replace(array("\r\n", "\n", "\r"), '</p><p>', 
+                                                addslashes($row['project_description'])) 
+                       . '</p></div>'), ENT_QUOTES)); ?>', CAPTION, '<?php 
+echo($AppUI->_('Description')); ?>', CENTER);" onmouseout="nd();"<?php } ?>>
+		<?php echo (htmlspecialchars($row['project_name'], ENT_QUOTES)); ?>
+		</a>
+	</td>
+	<td nowrap="nowrap">
+		<?php echo (htmlspecialchars($row['user_username'], ENT_QUOTES)); ?>
+	</td>
+	<td align="center" nowrap="nowrap">
+		<?php 
+echo (htmlspecialchars($row['total_tasks'] . ($row['my_tasks'] ? ' ('.$row['my_tasks'].')' : '')));
+?>
+	</td>
+	<td align="center" nowrap="nowrap" style="background-color:<?php 
+echo ($priority[$row['project_priority']]['color']); ?>">
+		<?php echo (($end_date ? $end_date->format($df) : '-')); ?>
+	</td>
+<?php 
+		if ($editProjectsAllowed) {
+?>
+	<td align="center">
+<?php 
+			if (getPermission('projects', 'edit', $row['project_id'])) {
+?>
+		<input type="checkbox" name="project_id[]" value="<?php echo ($row['project_id']); ?>" />
+<?php 
+			} else {
+?>
+		&nbsp;
+<?php 
+			} 
+?>
+	</td>
+<?php 
+		}
+?>
 </tr>
+<?php 
+	}
+}
+
+if ($none) {
+?>
+<tr>
+	<td colspan="<?php echo ($table_cols); ?>"><?php 
+echo $AppUI->_('No projects available'); ?></td>
+</tr>
+<?php 
+} else {
+?>
+<tr>
+	<td colspan="<?php echo ($table_cols); ?>" align="right">
+		<input type="submit" class="button" value="<?php 
+echo $AppUI->_('Update projects status'); ?>" />
+		<input type="hidden" name="update_project_status" value="1" />
+		<input type="hidden" name="m" value="projects" />
+<?php 
+	echo arraySelect($pstatus, 'project_status', 'size="1" class="text"', 2, true);
+?>
+	</td>
+</tr>
+<?php 
+}
+?>
 </table>
+</form>

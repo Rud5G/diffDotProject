@@ -116,6 +116,7 @@ bordertable {
 	border: 1px black solid;
 	font-family: Osaka,verdana,Sans-Serif;
 	font-size: 8pt;
+	color: #000009;
 	/*height: 12pt; Select boxes are too small in Mozilla */
 }
 
@@ -177,14 +178,14 @@ TD.clsBtnOn {
 TD.clsBtnOff {
 	color: #FFFFFF;
 	padding: 0 3;
-	tab-index: 0;
+	/* tab-index: 0; //not valid for TD */
 	border: solid #559999 2px;
 }
 
 TD.topBtnOff {
 	color: #FFFFFF;
 	padding: 0 3;
-	tab-index: 0;
+	/* tab-index: 0; //not valid for TD */
 	border: solid #cccccc 2px;
 }
 
@@ -469,3 +470,16 @@ table.tbl td.event td {
 }
 
 .hidden {display:none;}
+
+th strong {
+  float: left;
+  margin-top: 2px;
+}
+th form {
+  float: right;
+  padding: 0;
+  margin: 0;
+  margin-top: 1px;
+}
+
+.disabled { color: #000000; }

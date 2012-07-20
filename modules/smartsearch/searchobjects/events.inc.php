@@ -1,52 +1,32 @@
-<?php 
-class events {
-	var $table = 'events';
-	var $search_fields = array ("event_title","event_description");
-	var $keyword= null;
-	
-	function cevents (){
-		return new events();
-	}
-	
-	function fetchResults(&$permissions){
-		global $AppUI;
-		$sql = $this->_buildQuery();
-		$results = db_loadList($sql);
-		$outstring = "<th nowrap='nowrap' >".$AppUI->_('Events')."</th>\n";
-		if($results){
-			foreach($results as $records){
-			    if ($permissions->checkModuleItem($this->table, "view", $records["event_id"])) {
-    				$outstring .= "<tr>";
-    				$outstring .= "<td>";
-    				$outstring .= "<a href = \"index.php?m=calendar&a=view&event_id=".$records["event_id"]."\">".highlight($records["event_title"], $this->keyword)."</a>\n";
-    				$outstring .= "</td>\n";
-			    }
-			}
-		$outstring .= "</tr>";
-		}
-		else {
-			$outstring .= "<tr>"."<td>".$AppUI->_('Empty')."</td>"."</tr>";
-		}
-		return $outstring;
-	}
-	
-	function setKeyword($keyword){
-		$this->keyword = $keyword;
-	}
-	
-	function _buildQuery(){
-                $q  = new DBQuery;
-                $q->addTable($this->table);
-                $q->addQuery('event_id');
-                $q->addQuery('event_title');
+<?php /* SMARTSEARCH$Id: events.inc.php 6038 2010-10-03 05:49:01Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-                $sql = '';
-                foreach($this->search_fields as $field){
-                        $sql.=" $field LIKE '%$this->keyword%' or ";
-                }
-                $sql = substr($sql,0,-4);
-                $q->addWhere($sql);
-                return $q->prepare(true);
+/**
+* events Class
+*/
+class events extends smartsearch 
+{
+	var $table = 'events';
+	var $table_module = 'calendar';
+	var $table_key = 'event_id';
+	var $table_extra = '';
+	var $table_link = '?m=calendar&amp;a=view&amp;event_id=';
+	var $table_title = 'Events';
+	var $table_orderby = 'event_start_date';
+	var $search_fields = array('event_title', 'event_description', 'event_start_date', 
+	                           'event_end_date');
+	var $display_fields = array('event_title', 'event_description', 'event_start_date', 
+	                            'event_end_date');
+
+	function events() {
+		global $AppUI;
+		$this->table_extra = '(event_private = 0 or event_owner = ' . $AppUI->user_id . ')';	
+	}
+
+	function cevents() {
+		return new events();
 	}
 }
 ?>

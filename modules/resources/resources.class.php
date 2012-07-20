@@ -1,4 +1,8 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
 // Copyright 2004, Adam Donnison <adam@saki.com.au>
 // Released under GNU General Public License version 2 or later
 
@@ -34,7 +38,7 @@ class CResource extends CDpObject {
       $typelist[0] = array (
 	'resource_type_id' => 0,
 	'resource_type_name' => 'All Resources'
-      );
+     );
       while ($row = db_fetch_assoc($res)) {
 	  $typelist[] = $row;
       }

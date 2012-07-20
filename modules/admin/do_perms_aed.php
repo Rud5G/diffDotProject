@@ -1,22 +1,33 @@
-<?php /* ADMIN $Id: do_perms_aed.php,v 1.4 2004/10/15 01:32:52 ajdonnison Exp $ */
-$del = isset($_POST['del']) ? $_POST['del'] : 0;
+<?php /* ADMIN $Id: do_perms_aed.php 6046 2010-10-04 09:04:46Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
+$del = (isset($_POST['del']) ? $_POST['del'] : 0);
 
 $obj =& $AppUI->acl();
 
-$AppUI->setMsg( 'Permission' );
+$AppUI->setMsg('Permission');
+
 if ($del) {
-	if ($obj->del_acl($_REQUEST['permission_id'])) {
-		$AppUI->setMsg( "deleted", UI_MSG_ALERT, true );
-		$AppUI->redirect();
-	} else {
-		$AppUI->setMsg( $msg, UI_MSG_ERROR );
-		$AppUI->redirect();
+	if (! $obj->checkModule($m, 'delete')) {
+		$AppUI->redirect('m=public&a=access_denied');
 	}
-} else {
-	if ($obj->addUserPermission()) {
-		$AppUI->setMsg( $isNotNew ? 'updated' : 'added', UI_MSG_OK, true );
+	if ($obj->del_acl(intval($_REQUEST['permission_id']))) {
+		$AppUI->setMsg('deleted', UI_MSG_ALERT, true);
 	} else {
-		$AppUI->setMsg( $msg, UI_MSG_ERROR );
+		$AppUI->setMsg($msg, UI_MSG_ERROR);
+	}
+	$AppUI->redirect();
+} else {
+	if (($isNotNew && ! $obj->checkModule($m, 'edit'))
+	|| (!$isNotNew && ! $obj->checkModule($m, 'add'))) {
+		$AppUI->redirect('m=public&a=access_denied');
+	}
+	if ($obj->addUserPermission()) {
+		$AppUI->setMsg($isNotNew ? 'updated' : 'added', UI_MSG_OK, true);
+	} else {
+		$AppUI->setMsg($msg, UI_MSG_ERROR);
 	}
 	$AppUI->redirect();
 }

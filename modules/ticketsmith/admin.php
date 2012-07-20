@@ -1,10 +1,15 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-/* $Id: admin.php,v 1.7 2004/01/31 04:43:44 ajdonnison Exp $ */
+/* $Id: admin.php 6079 2010-12-04 08:12:17Z ajdonnison $ */
 
-require("modules/ticketsmith/config.inc.php");
-require("modules/ticketsmith/common.inc.php");
+require(DP_BASE_DIR.'/modules/ticketsmith/config.inc.php');
+require(DP_BASE_DIR.'modules/ticketsmith/common.inc.php');
 
+$db = new DBQuery;
+$dbprefix = dPgetConfig('dbprefix','');
 
 /* determine page function */
 switch ($action) {
@@ -15,7 +20,9 @@ switch ($action) {
         }
         $fields_string = join(", ", $fields);
         $values_string = join(", ", $values);
-        do_query("INSERT INTO users ($fields_string) VALUES ($values_string)");
+		$db->addTable('users');
+		$db->addInsert($fields_string, $values_string);
+		$db->exec();
         $title = "User Created";
         $content = "<tr><td align=\"center\" colspan=\"3\">The user has been created.</td></tr>\n";
         break;
@@ -25,43 +32,49 @@ switch ($action) {
             $update_fields[] = $fields[$loop] . " = '" . escape_string($$fields[$loop]) . "'";
         }
         $update_string = join(", ", $update_fields);
-        do_query("UPDATE users SET $update_string WHERE id = '$id'");
+		$db->addTable('users');
+		$db->addUpdate($fields, $update_fields, true);
+		$db->addWhere("id='" . $id . "'");
+		$db->exec();
         $title = "User Updated";
         $content = "<tr><td align=\"center\" colspan=\"3\">The user profile has been updated.</td></tr>\n";
         break;
     case "Delete this user":
-        do_query("DELETE FROM users WHERE id = '$id'");
+		$db->addTable('users');
+		$db->addWhere("id='" . $id . "'");
+		$db->setDelete();
+		$db->exec();
         $title = "User Deleted";
         $content = "<tr><td align=\"center\" colspan=\"3\">The user has been deleted.</td></tr>\n";
         break;
     case "new":
         $title = "Create User";
-        $content = "<tr><td><strong>Name</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"name\" size=\"20\"></font></td></tr>\n";
-        $content .= "<tr><td><strong>Email</strong> </td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"email\" size=\"20\"></font></td></tr>\n";
-        $content .= "<tr><td><strong>Username</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"username\" size=\"20\"></font></td></tr>\n";
-        $content .= "<tr><td><strong>Password</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"password\" name=\"password\" size=\"20\"></font></td></tr>\n";
+		$content = "<tr><td><strong>Name</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"name\" size=\"20\" /></font></td></tr>\n";
+		$content .= "<tr><td><strong>Email</strong> </td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"email\" size=\"20\" /></font></td></tr>\n";
+		$content .= "<tr><td><strong>Username</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"username\" size=\"20\" /></font></td></tr>\n";
+		$content .= "<tr><td><strong>Password</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"password\" name=\"password\" size=\"20\" /></font></td></tr>\n";
         $content .= "<tr><td><strong>Signature</strong></td><td colspan=\"2\"><tt><textarea name=\"signature\" cols=\"72\" rows=\"3\"></textarea></tt></td></tr>\n";
-        $content .= "<tr><td><br /></td><td colspan=\"2\"><font size=\"-1\"><input type=\"submit\" value=\"Create user\"></font></td></tr>\n";
-        $content .= "<input type=\"hidden\" name=\"action\" value=\"create\">\n";
+		$content .= "<tr><td><br /></td><td colspan=\"2\"><font size=\"-1\"><input type=\"submit\" value=\"Create user\" /></font></td></tr>\n";
+		$content .= "<input type=\"hidden\" name=\"action\" value=\"create\" />\n";
         break;
     case "edit":
         $title = "Edit User";
-        $user_info = query2hash("SELECT * FROM users WHERE id = '$id'");
-        $content = "<tr><td><strong>Name</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"name\" size=\"20\" value=\"" . $user_info["name"] . "\"></font></td></tr>\n";
-        $content .= "<tr><td><strong>Email</strong> </td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"email\" size=\"20\" value=\"" . $user_info["email"] . "\"></font></td></tr>\n";
-        $content .= "<tr><td><strong>Password</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"password\" name=\"password\" size=\"20\" value=\"" . $user_info["password"] . "\"></font></td></tr>\n";
+        $user_info = query2hash("SELECT * FROM {$dbprefix}users WHERE id = '$id'");
+		$content = "<tr><td><strong>Name</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"name\" size=\"20\" value=\"" . $user_info["name"] . "\" /></font></td></tr>\n";
+		$content .= "<tr><td><strong>Email</strong> </td><td colspan=\"2\"><font size=\"-1\"><input type=\"text\" name=\"email\" size=\"20\" value=\"" . $user_info["email"] . "\" /></font></td></tr>\n";
+		$content .= "<tr><td><strong>Password</strong></td><td colspan=\"2\"><font size=\"-1\"><input type=\"password\" name=\"password\" size=\"20\" value=\"" . $user_info["password"] . "\" /></font></td></tr>\n";
         $content .= "<tr><td><strong>Signature</strong></td><td colspan=\"2\"><tt><textarea name=\"signature\" cols=\"72\" rows=\"3\">" . $user_info["signature"] . "</textarea></tt></td></tr>\n";
-        $content .= "<tr><td><br /></td><td colspan=\"2\"><font size=\"-1\"><input type=\"submit\" name=\"action\" value=\"Apply changes\"> <input type=\"submit\" name=\"action\" value=\"Delete this user\"></font></td></tr>\n";
-        $content .= "<input type=\"hidden\" name=\"id\" value=\"" . $user_info["id"] . "\">\n";
-        $content .= "<input type=\"hidden\" name=\"old_password\" value=\"" . $user_info["password"] . "\">\n";
+		$content .= "<tr><td><br /></td><td colspan=\"2\"><font size=\"-1\"><input type=\"submit\" name=\"action\" value=\"Apply changes\" /> <input type=\"submit\" name=\"action\" value=\"Delete this user\" /></font></td></tr>\n";
+		$content .= "<input type=\"hidden\" name=\"id\" value=\"" . $user_info["id"] . "\" />\n";
+		$content .= "<input type=\"hidden\" name=\"old_password\" value=\"" . $user_info["password"] . "\" />\n";
         break;
     default:
         $title = "User Administration";
         $content = "<tr><td align=\"center\"><strong>Edit</strong></td><td><strong>User</strong></td><td><strong>Email</strong></td></tr>\n";
-        $result = do_query("SELECT id, name, email FROM users WHERE username != 'admin' ORDER BY id");
+        $result = do_query("SELECT id, name, email FROM {$dbprefix}users WHERE username != 'admin' ORDER BY id");
         while ($row = result2hash($result)) {
             $content .= "<tr>";
-            $content .= "<td align=\"center\"><a href=\"index.php?a=ticketsmith&a=edit&id=" . $row["id"] . "\"><img src=modules/ticketsmith/images/posticon.gif\" border=\"0\"></a></td>";
+			$content .= "<td align=\"center\"><a href=\"?a=ticketsmith&amp;a=edit&amp;id=" . $row["id"] . "\"><img src='modules/ticketsmith/images/posticon.gif' border=\"0\" /></a></td>";
             $content .= "<td>" . $row["name"] . "</td>";
             $content .= "<td>" . $row["email"] . "</td>";
             $content .= "</tr>\n";
@@ -72,7 +85,7 @@ switch ($action) {
 print("<form name='ticketform' action=\"$PHP_SELF\" method=\"post\">\n");
 
 /* start table */
-print("<table class=maintable bgcolor=#eeeeee>\n");
+print("<table class='maintable' bgcolor='#eeeeee'>\n");
 print("<tr>\n");
 print("<td colspan=\"3\" align=\"center\" bgcolor=\"" . $CONFIG["heading_color"] . "\">\n");
 print("<div class=\"heading\">$title</div>\n");

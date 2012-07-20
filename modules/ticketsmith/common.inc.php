@@ -1,6 +1,9 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-/* $Id: common.inc.php,v 1.20 2004/11/18 14:41:57 gregorerhardt Exp $ */
+/* $Id: common.inc.php 6079 2010-12-04 08:12:17Z ajdonnison $ */
 
 /* program info */
 $program = "Dotproject";
@@ -90,7 +93,7 @@ function column2array ($query) {
 
 /* create read-only output of list values */
 function chooseSelectedValue ($name, $options, $selected) {
-	while(list($key, $val) = each($options)) {
+	while (list($key, $val) = each($options)) {
 			if ($key == $selected) {
 				$output = "$val\n";
 			}
@@ -103,9 +106,9 @@ function chooseSelectedValue ($name, $options, $selected) {
 function create_selectbox ($name, $options, $selected) {
 
 	$output= "";
-	$output .= "<select name=\"$name\" onChange=\"document.ticketform.submit()\" class=\"text\">\n";
+	$output .= '<select name="'.$name.'" onchange="javascript:document.ticketform.submit()" class="text">'."\n";
 
-	while(list($key, $val) = each($options)) {
+	while (list($key, $val) = each($options)) {
 		$output .= "<option value=\"$key\"";
 
 		if ($key == $selected) {
@@ -148,23 +151,23 @@ function get_time_ago ($timestamp) {
         }
         $output = "second";
     }
-    elseif ($elapsed_seconds < 3600) { // minutes ago
+    else if ($elapsed_seconds < 3600) { // minutes ago
         $interval = round($elapsed_seconds / 60);
         $output = "minute";
     }
-    elseif ($elapsed_seconds < 86400) { // hours ago
+    else if ($elapsed_seconds < 86400) { // hours ago
         $interval = round($elapsed_seconds / 3600);
         $output = "hour";
     }
-    elseif ($elapsed_seconds < 604800) { // days ago
+    else if ($elapsed_seconds < 604800) { // days ago
         $interval = round($elapsed_seconds / 86400);
         $output = "day";
     }
-    elseif ($elapsed_seconds < 2419200) { // weeks ago
+    else if ($elapsed_seconds < 2419200) { // weeks ago
         $interval = round($elapsed_seconds / 604800);
         $output = "week";
     }
-    elseif ($elapsed_seconds < 29030400) { // months ago
+    else if ($elapsed_seconds < 29030400) { // months ago
         $interval = round($elapsed_seconds / 2419200);
         $output = " month";
     }
@@ -236,30 +239,30 @@ function smart_wrap ($text, $width) {
 function word_wrap ($string, $cols = 78, $quote_old = false, $prefix = ">", $nice_prefix = "> ") {
 
 if (preg_match("/^.*\r\n/", $string)) {
-	$t_lines = split( "\r\n", $string);
+	$t_lines = mb_split("\r\n", $string);
 } else if (preg_match("/^.*\n/", $string)) {
-	$t_lines = split( "\n", $string);
+	$t_lines = mb_split("\n", $string);
 } else {
-	$t_lines = split( "\r", $string);
+	$t_lines = mb_split("\r", $string);
 }
 
 $outlines = "";
 $leftover = "";
 
 // Loop through each line of message
-while(list(, $thisline) = each($t_lines)) {
+while (list(, $thisline) = each($t_lines)) {
 	// Process Leftover
-	if (strlen($leftover) > 0) {
+	if (mb_strlen($leftover) > 0) {
 		$counter = 0;
 
 		// Subtract all prefixes from the beginning of this line.
-		while (substr($thisline, 0, strlen($prefix)) == $prefix) {
+		while (mb_substr($thisline, 0, mb_strlen($prefix)) == $prefix) {
 			$counter++;
 			
-			if (substr($thisline, 0, strlen($nice_prefix)) == $nice_prefix) {
-				$thisline = substr($thisline, strlen($nice_prefix));
+			if (mb_substr($thisline, 0, mb_strlen($nice_prefix)) == $nice_prefix) {
+				$thisline = mb_substr($thisline, mb_strlen($nice_prefix));
 			} else {
-				$thisline = substr($thisline, strlen($prefix));
+				$thisline = mb_substr($thisline, mb_strlen($prefix));
 			}
 		}
 		
@@ -272,25 +275,25 @@ while(list(, $thisline) = each($t_lines)) {
 		}
 	}
 
-	if(strlen($thisline) + strlen($nice_prefix) > $cols) {
-		$newline = "";
-		$t_l_lines = split(" ", $thisline);
+	if (mb_strlen($thisline) + mb_strlen($nice_prefix) > $cols) {
+		$newline = '';
+		$t_l_lines = mb_split(' ', $thisline);
 		// This line is too big.  Break it up into words and add them one by one.
-		while(list(, $thisword) = each($t_l_lines)) {
+		while (list(, $thisword) = each($t_l_lines)) {
 			// Process words that are longer than $cols
-			while((strlen($thisword) + strlen($nice_prefix)) > $cols) {
+			while ((mb_strlen($thisword) + mb_strlen($nice_prefix)) > $cols) {
 				$cur_pos = 0;
 				$outlines .= $nice_prefix;
-				for($num=0; $num < $cols-1; $num++) {
+				for ($num=0; $num < $cols-1; $num++) {
 					$outlines .= $thisword[$num];
 					$cur_pos++;
 				}
 				$outlines .= "\n";
-				$thisword = substr($thisword, $cur_pos, (strlen($thisword)-$cur_pos));
+				$thisword = mb_substr($thisword, $cur_pos, (mb_strlen($thisword)-$cur_pos));
 			}
 
 			// Check that the line is within $cols.  If not, don't add the word; start a new line.
-			if((strlen($newline) + strlen($thisword) + strlen($nice_prefix) + 1) > $cols) {
+			if ((mb_strlen($newline) + mb_strlen($thisword) + mb_strlen($nice_prefix) + 1) > $cols) {
 				if ($quote_old) $outlines .= $nice_prefix.$newline."\n";
 				else $outlines .= $newline."\n";
 				$newline = $thisword." ";
@@ -307,7 +310,7 @@ while(list(, $thisline) = each($t_lines)) {
 	}
 	
 	// If we're processing the last line and there's leftover text, add a blank line to hold the leftover
-	if (key($t_lines) == count($t_lines) - 1 && strlen($leftover) > 0) {
+	if (key($t_lines) == count($t_lines) - 1 && mb_strlen($leftover) > 0) {
 		$t_lines[] = "";
 	}
 }
@@ -321,10 +324,12 @@ function format_field ($value, $type, $ticket = NULL) {
     global $CONFIG;
     global $AppUI;
     global $canEdit;
+    $dbprefix = dPgetConfig('dbprefix','');
+
     switch ($type) {
         case "user":
             if ($value) {
-	    	$output = query2result("SELECT CONCAT_WS(' ',contact_first_name,contact_last_name) as name FROM users u LEFT JOIN contacts ON u.user_contact = contact_id WHERE user_id = '$value'");
+	    	$output = query2result("SELECT CONCAT_WS(' ',contact_first_name,contact_last_name) as name FROM {$dbprefix}users u LEFT JOIN {$dbprefix}contacts ON u.user_contact = contact_id WHERE user_id = '$value'");
             } else {
                 $output = "-";
             }
@@ -340,7 +345,6 @@ function format_field ($value, $type, $ticket = NULL) {
         case "priority_view":
             $priority = $CONFIG["priority_names"][$value];
             $color = $CONFIG["priority_colors"][$value];
-	    //$priority = $AppUI->_($priority);
             if ($value == 3) {
                 $priority = "<strong>$priority</strong>";
             }
@@ -360,7 +364,7 @@ function format_field ($value, $type, $ticket = NULL) {
             break;
         case "assignment":
             $options[0] = "-";
-	    $query = "SELECT user_id as id, CONCAT_WS(' ',contact_first_name,contact_last_name) as name FROM users u LEFT JOIN contacts ON u.user_contact = contact_id";
+	    $query = "SELECT user_id as id, CONCAT_WS(' ',contact_first_name,contact_last_name) as name FROM {$dbprefix}users u LEFT JOIN {$dbprefix}contacts c ON u.user_contact = c.contact_id ORDER BY name";
             $result = do_query($query);
             while ($row = result2hash($result)) {
                 $options[$row["id"]] = $row["name"];
@@ -374,20 +378,20 @@ function format_field ($value, $type, $ticket = NULL) {
             break;
         case "view":
             if ($CONFIG["index_link"] == "latest") {
-                $latest_value = query2result("SELECT ticket FROM tickets WHERE parent = '$value' ORDER BY ticket DESC LIMIT 1");
+                $latest_value = query2result("SELECT ticket FROM {$dbprefix}tickets WHERE parent = '$value' ORDER BY ticket DESC LIMIT 1");
                 if ($latest_value) {
                     $value = $latest_value;
                 }
             }
-            $output = "<a href=index.php?m=ticketsmith&a=view&ticket=$value>";
-            $output .= "<img src=images/icons/pencil.gif border=0></a>";
+            $output = "<a href='?m=ticketsmith&amp;a=view&amp;ticket=$value'>$value&nbsp;";
+			$output .= "<img src='images/icons/pencil.gif' border='0' alt='' /></a>";
             break;
 	case "attach":
-	    $output = "<A href=index.php?m=ticketsmith&a=attach&ticket=$value>";
+	    $output = "<a href='?m=ticketsmith&amp;a=attach&amp;ticket=$value'>";
 	    $output .= "Link</a>";
 	    break;
 	case "doattach":
-	    $output = "<A href=index.php?m=ticketsmith&a=attach&newparent=$value&dosql=reattachticket&ticket=$ticket>";
+	    $output = "<a href='?m=ticketsmith&amp;a=attach&amp;newparent=$value&amp;dosql=reattachticket&amp;ticket=$ticket'>";
 	    $output .= "Link</a>";
 	    break;
         case "open_date":
@@ -405,7 +409,7 @@ function format_field ($value, $type, $ticket = NULL) {
             else {
                 $output = get_time_ago($value);
             }
-            $latest_followup_type = query2result("SELECT type FROM tickets WHERE parent = '$ticket' ORDER BY timestamp DESC LIMIT 1");
+            $latest_followup_type = query2result("SELECT type FROM {$dbprefix}tickets WHERE parent = '$ticket' ORDER BY timestamp DESC LIMIT 1");
             if ($latest_followup_type) {
                 $latest_followup_type = preg_replace("/(\w+)\s.*/", "\\1", $latest_followup_type);
                 $output .= " [$latest_followup_type]";
@@ -433,7 +437,7 @@ function format_field ($value, $type, $ticket = NULL) {
         case "followup":
             $output = "\n<tt>\n";
             $output .= "<textarea style='font-family: monospace;' name=\"followup\" wrap=\"hard\" cols=\"72\" rows=\"20\">\n";
-            $signature = query2result("SELECT user_signature FROM users WHERE user_id = '$AppUI->user_id'");
+            $signature = query2result("SELECT user_signature FROM {$dbprefix}users WHERE user_id = '$AppUI->user_id'");
             if ($signature) {
                 $output .= "\n";
                 $output .= "-- \n";
@@ -454,19 +458,19 @@ function format_field ($value, $type, $ticket = NULL) {
             $value = preg_replace("/(\[\#\d+\])(\w+)/", "\\2", $value);
             $value = "Re: " . $value;
             $value = htmlspecialchars($value);
-            @$output .= "<input type=\"text\" name=\"subject\" value=\"$value\" size=\"70\">\n";
+			@$output .= "<input type=\"text\" name=\"subject\" value=\"$value\" size=\"70\" />\n";
             break;
         case "cc":
             $value = htmlspecialchars($value);
-            $output = "<input type=\"text\" name=\"cc\" value=\"$value\" size=\"70\">";
+			$output = "<input type=\"text\" name=\"cc\" value=\"$value\" size=\"70\" />";
             break;
         case "recipient":
             $value = htmlspecialchars($value);
-            $output = "<input type=\"text\" name=\"recipient\" value=\"$value\" size=\"70\">";
+			$output = "<input type=\"text\" name=\"recipient\" value=\"$value\" size=\"70\" />";
             break;
         case "original_author":
             if ($value) {
-                $value = ereg_replace("\"", "", $value);
+                $value = preg_replace('/\"/', '', $value);
                 $output = htmlspecialchars($value);
             }
             else {
@@ -475,13 +479,35 @@ function format_field ($value, $type, $ticket = NULL) {
             break;
         case "email":
             if ($value) {
-                $value = ereg_replace("\"", "", $value);
+                $value = preg_replace('/\"/', '', $value);
                 $output = htmlspecialchars($value);
             }
             else {
                 $output = "<em>".$AppUI->_('none')."</em>";
             }
             break;
+		case 'ticket_company':
+		    $q  = new DBQuery;
+			$q->addTable('companies','co');
+			$q->addQuery('co.*');
+			$q->addWhere('co.company_id = '.$value);
+			$sql = $q->prepare();
+			if (!db_loadObject($sql, $obj)) {
+				// it all dies!
+			}
+			$output = '<a href="?m=companies&amp;a=view&amp;company_id='.$value.'">'.$obj->company_name.'</a>';
+			break;
+		case 'ticket_project':
+		    $q  = new DBQuery;
+			$q->addTable('projects', 'pr');
+			$q->addQuery('pr.*');
+			$q->addWhere('pr.project_id = '.$value);
+			$sql = $q->prepare();
+			if (!db_loadObject($sql, $obj)) {
+				// it all dies!
+			}
+			$output = '<a href="?m=projects&amp;a=view&amp;project_id='.$value.'">'.$obj->project_name.'</a>';
+			break;
         default:
             $output = $value ? htmlspecialchars($value) : "<em>".$AppUI->_('none')."</em>";
     }
@@ -489,13 +515,10 @@ function format_field ($value, $type, $ticket = NULL) {
 
 }
 
-/* register login stuff */
-//session_register("login_id");
-//session_register("login_name");
-
 /* figure out parent & type */
 if (isset($ticket)) {
-    list($ticket_type, $ticket_parent) = query2array("SELECT type, parent FROM tickets WHERE ticket = '$ticket'");
+    $dbprefix = dPgetConfig('dbprefix','');
+    list($ticket_type, $ticket_parent) = query2array("SELECT type, parent FROM {$dbprefix}tickets WHERE ticket = '$ticket'");
 }
 
 

@@ -1,5 +1,8 @@
-<?php /* $Id: config-dist.php,v 1.54.8.1 2006/01/01 15:58:05 pedroix Exp $ */
+<?php /* $Id: config-dist.php 6048 2010-10-06 10:01:39Z ajdonnison $ */
 
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
 /*
 Copyright (c) 2003-2005 The dotProject Development Team <core-developers@dotproject.net>
 
@@ -37,6 +40,7 @@ The full text of the GPL is in the COPYING file.
 $dPconfig['dbtype'] = 'mysql';      // ONLY MySQL is supported at present
 $dPconfig['dbhost'] = 'localhost';
 $dPconfig['dbname'] = 'dotproject';  // Change to match your DotProject Database Name
+$dPconfig['dbprefix'] = 'dotp_';		// Change to match your DotProject Database Table-Name Prefix
 $dPconfig['dbuser'] = 'dp_user';  // Change to match your MySQL Username
 $dPconfig['dbpass'] = 'dp_pass';  // Change to match your MySQL Password
 

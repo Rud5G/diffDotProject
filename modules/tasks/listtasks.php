@@ -1,14 +1,27 @@
-<?php //$Id: listtasks.php,v 1.3 2005/03/19 05:58:52 ajdonnison Exp $
+<?php //$Id: listtasks.php 5972 2010-03-29 00:05:34Z merlinyoda $
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-$perms =& $AppUI->acl();
-if (! $perms->checkModule('tasks', 'view'))
+if (!(getPermission('tasks', 'view'))) {
 	$AppUI->redirect("m=public&a=access_denied");
+}
+$proj = dPgetParam($_GET, 'project', 0);
+$userFilter = dPgetParam($_GET, 'userFilter', false);	
 
-$proj = $_GET['project'];
-$sql = 'SELECT task_id, task_name
-        FROM tasks';
-if ($proj != 0)
-  $sql .= ' WHERE task_project = ' . $proj;
+$q = new DBQuery();
+$q->addQuery('t.task_id, t.task_name');
+$q->addTable('tasks', 't');
+
+if ($userFilter) {
+	$q->addJoin('user_tasks', 'ut', 'ut.task_id = t.task_id');
+	$q->addWhere('ut.user_id = '.$AppUI->user_id);
+}
+if ($proj != 0) {
+  $q->addWhere('task_project = '.$proj);
+}
+
+$sql = $q->prepare();
 $tasks = db_loadList($sql);
 ?>
 
@@ -17,17 +30,16 @@ function loadTasks()
 {
   var tasks = new Array();
   var sel = parent.document.forms['form'].new_task;
-  while ( sel.options.length )
+  while (sel.options.length)
     sel.options[0] = null;
     
   sel.options[0] = new Option('[top task]', 0);
   <?php
     $i = 0;
-    foreach($tasks as $task)
-    {
+    foreach ($tasks as $task) {
       ++$i;
     ?>
-  sel.options[<?php echo $i; ?>] = new Option('<?php echo $task['task_name']; ?>', <?php echo $task['task_id']; ?>);
+  sel.options[<?php echo $i; ?>] = new Option("<?php echo $task['task_name']; ?>", <?php echo $task['task_id']; ?>);
     <?php
     }
     ?>

@@ -1,9 +1,12 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
 global $tabbed, $currentTabName, $currentTabId, $AppUI;
-$obj =& new CResource;
+$obj = new CResource;
 
-$query =& new DBQuery;
+$query = new DBQuery;
 $obj->setAllowedSQL($AppUI->user_id, $query);
 $query->addTable($obj->_tbl);
 if (!$tabbed)
@@ -13,7 +16,7 @@ if ($currentTabId)
   $query->addWhere('resource_type = ' . $_SESSION['resource_type_list'][$currentTabId]['resource_type_id']);
 $res =& $query->exec();
 ?>
-<table width='100%' border='0' cellpadding='2' cellspacing='1' class='tbl'>
+<table width='100%' border='0' cellpadding='2' cellspacing='1' class='tbl' summary="view resources">
 <tr>
 	<th nowrap='nowrap' width='20%'>
     <?php echo $AppUI->_('ID'); ?>
@@ -30,12 +33,12 @@ $res =& $query->exec();
 ?>
 <tr>
   <td>
-    <a href="index.php?m=resources&a=view&resource_id=<?php echo $res->fields['resource_id'];?>">
+    <a href="index.php?m=resources&amp;a=view&amp;resource_id=<?php echo $res->fields['resource_id'];?>">
     <?php echo $res->fields['resource_key']; ?>
     </a>
   </td>
   <td>
-    <a href="index.php?m=resources&a=view&resource_id=<?php echo $res->fields['resource_id'];?>">
+    <a href="index.php?m=resources&amp;a=view&amp;resource_id=<?php echo $res->fields['resource_id'];?>">
     <?php echo $res->fields['resource_name']; ?>
 		</a>
   </td>

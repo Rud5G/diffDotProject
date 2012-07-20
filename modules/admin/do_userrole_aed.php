@@ -1,30 +1,58 @@
-<?php /* ADMIN $Id: do_userrole_aed.php,v 1.1 2004/10/15 01:39:25 ajdonnison Exp $ */
+<?php /* ADMIN $Id: do_userrole_aed.php 6104 2010-12-16 10:46:32Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-$del = isset($_REQUEST['del']) ? $_REQUEST['del'] : FALSE;
+require_once $AppUI->getModuleClass('contacts');
+$del = dPgetParam($_POST, 'del', false);
+$role_id = dPgetParam($_POST, 'role_id', 0);
+$user_id = dPgetParam($_POST, 'user_id', 0);
+$user_role = dPgetParam($_POST, 'user_role', 0);
 
-$perms =& $AppUI->acl();
+if (!(getPermission($m, 'edit', $user_id))) {
+	$AppUI->redirect('m=public&a=access_denied');
+}
 
 // prepare (and translate) the module name ready for the suffix
-$AppUI->setMsg( 'Roles' );
-
+$AppUI->setMsg('Role');
+$perms =& $AppUI->acl();
 if ($del) {
-	if ($perms->deleteUserRole($_REQUEST['role_id'], $_REQUEST['user_id'])) {
-		$AppUI->setMsg( "deleted", UI_MSG_ALERT, true );
-		$AppUI->redirect();
+	if ($perms->deleteUserRole($role_id, $user_id)) {
+		$AppUI->setMsg('deleted', UI_MSG_ALERT, true);
+		if (dPgetConfig('user_contact_inactivate') && ! $perms->checkLogin($user_id)) {
+			// Mark contact as private
+			$obj = new CUser();
+			$contact = new CContact();
+			$obj->load($user_id);
+			if ($contact->load($obj->user_contact)) {
+				$contact->contact_private = 1;
+				$contact->store();
+			}
+		}
 	} else {
-		$AppUI->setMsg( "failed to delete role", UI_MSG_ERROR );
-		$AppUI->redirect();
+		$AppUI->setMsg('failed to delete role', UI_MSG_ERROR);
 	}
-	return;
+} else if ($user_role) {
+	$public_contact = false;
+	if (dPgetConfig('user_contact_activate') && ! $perms->checkLogin($user_id)) {
+		$public_contact = true;
+	}
+	if ($perms->insertUserRole($user_role, $user_id)) {
+		$AppUI->setMsg('added', UI_MSG_OK, true);
+		if ($public_contact) {
+			// Mark contact as public
+			$obj = new CUser();
+			$contact = new CContact();
+			$obj->load($user_id);
+			if ($contact->load($obj->user_contact)) {
+				$contact->contact_private = 0;
+				$contact->store();
+			}
+		}
+	} else {
+		$AppUI->setMsg('failed to add role', UI_MSG_ERROR);
+	}
 }
+$AppUI->redirect();
 
-if (isset($_REQUEST['user_role']) && $_REQUEST['user_role']) {
-	if ( $perms->insertUserRole($_REQUEST['user_role'], $_REQUEST['user_id'])) {
-		$AppUI->setMsg( "added", UI_MSG_ALERT, true );
-		$AppUI->redirect();
-	} else {
-		$AppUI->setMsg( "failed to add role", UI_MSG_ERROR );
-		$AppUI->redirect();
-	}
-}
 ?>

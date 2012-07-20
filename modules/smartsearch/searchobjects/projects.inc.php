@@ -1,57 +1,36 @@
-<?php 
-class projects {
+<?php /* SMARTSEARCH$Id: projects.inc.php 6038 2010-10-03 05:49:01Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
+/**
+* projects Class
+*/
+class projects extends smartsearch 
+{
 	var $table = 'projects';
-	var $search_fields = array ("project_name","project_short_name","project_description","project_url","project_demo_url");
-	var $keyword = null;
-		
-	function cprojects (){
+	var $table_alias = 'p';
+	var $table_module = 'projects';
+	var $table_key = 'p.project_id';
+	var $table_link = '?m=projects&amp;a=view&amp;project_id=';
+	var $table_title = 'Projects';
+	var $table_orderby = 'p.project_name';
+	var $search_fields = array('p.project_id', 'p.project_name', 'p.project_short_name', 'p.project_description', 
+	                           'p.project_url', 'p.project_demo_url', 'con.contact_last_name', 
+	                           'con.contact_first_name', 'con.contact_email', 'con.contact_title', 
+	                           'con.contact_email2', 'con.contact_phone', 'con.contact_phone2', 
+	                           'con.contact_address1', 'con.contact_notes');
+	var $display_fields = array('p.project_name', 'p.project_short_name', 'p.project_description', 
+	                            'p.project_url', 'p.project_demo_url', 'con.contact_last_name', 
+	                            'con.contact_first_name', 'con.contact_email', 'con.contact_title', 
+	                            'con.contact_email2', 'con.contact_phone', 'con.contact_phone2', 
+	                            'con.contact_address1', 'con.contact_notes');
+	var $table_joins = array(array('table' => 'project_contacts', 'alias' => 'pc', 
+	                               'join' => 'p.project_id = pc.project_id'), 
+	                         array('table' => 'contacts', 'alias' => 'con', 
+	                               'join' => 'pc.contact_id = con.contact_id'));
+	
+	function cprojects () {
 		return new projects();
 	}
-
-
-	function fetchResults(&$permissions){
-		global $AppUI;
-		$sql = $this->_buildQuery();
-		$results = db_loadList($sql);
-		$outstring = "<th nowrap='nowrap' >".$AppUI->_('Projects')."</th>\n";
-		require_once($AppUI->getModuleClass("projects"));
-		if($results){
-			foreach($results as $records){
-			    if ($permissions->checkModuleItem($this->table, "view", $records["project_id"])) {
-			        $obj = new CProject();
-                    if (!in_array($records["project_id"], $obj->getDeniedRecords($AppUI->user_id))) {
-        				$outstring .= "<tr>";
-        				$outstring .= "<td>";
-        				$outstring .= "<a href = \"index.php?m=projects&a=view&project_id=".$records["project_id"]."\">".highlight($records["project_name"], $this->keyword)."</a>\n";
-        				$outstring .= "</td>\n";
-                    }
-			    }
-			}
-		$outstring .= "</tr>";
-		}
-		else {
-			$outstring .= "<tr>"."<td>".$AppUI->_('Empty')."</td>"."</tr>";
-		}
-		return $outstring;
-	}
-	
-	function setKeyword($keyword){
-		$this->keyword = $keyword;
-	}
-	
-	function _buildQuery(){
-                $q  = new DBQuery;
-                $q->addTable($this->table);
-                $q->addQuery('project_id');
-                $q->addQuery('project_name');
-
-                $sql = '';
-                foreach($this->search_fields as $field){
-                        $sql.=" $field LIKE '%$this->keyword%' or ";
-                }
-                $sql = substr($sql,0,-4);
-                $q->addWhere($sql);
-                return $q->prepare(true);
-	}
 }
-?>

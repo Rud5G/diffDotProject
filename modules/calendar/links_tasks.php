@@ -1,4 +1,8 @@
-<?php /* CALENDAR $Id: links_tasks.php,v 1.12 2005/03/29 14:51:19 gregorerhardt Exp $ */
+<?php /* CALENDAR $Id: links_tasks.php 5878 2009-04-26 22:19:37Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
+
 
 /**
 * Sub-function to collect tasks within a period
@@ -10,54 +14,58 @@
 * @param int the company id to filter by
 * @author Andrew Eddie <eddieajau@users.sourceforge.net>
 */
-function getTaskLinks( $startPeriod, $endPeriod, &$links, $strMaxLen, $company_id=0 ) {
+function getTaskLinks($startPeriod, $endPeriod, &$links, $strMaxLen, $company_id=0) {
 	GLOBAL $a, $AppUI, $dPconfig;
-	$tasks = CTask::getTasksForPeriod( $startPeriod, $endPeriod, $company_id );
+	$tasks = CTask::getTasksForPeriod($startPeriod, $endPeriod, $company_id, $AppUI->user_id, true);
 
-	$durnTypes = dPgetSysVal( 'TaskDurationType' );
+	$durnTypes = dPgetSysVal('TaskDurationType');
 
 	$link = array();
 	$sid = 3600*24;
 	// assemble the links for the tasks
 
 	foreach ($tasks as $row) {
-	// the link
-		$link['href'] = "?m=tasks&a=view&task_id=".$row['task_id'];
-		$link['alt'] = $row['project_name'].":\n".$row['task_name'];
-
-	// the link text
-		if (strlen( $row['task_name'] ) > $strMaxLen) {
-			$row['task_name'] = substr( $row['task_name'], 0, $strMaxLen ).'...';
+		// the link
+		$link['href'] = ('?m=tasks&a=view&task_id=' . $row['task_id']);
+		$link['alt'] = ($row['project_name'] . ":\n" . $row['task_name']);
+		
+		// the link text
+		if (mb_strlen($row['task_name']) > $strMaxLen) {
+			$row['task_name'] = (mb_substr($row['task_name'], 0, $strMaxLen) . '...');
 		}
-		$link['text'] = '<span style="color:'.bestColor($row['color']).';background-color:#'.$row['color'].'">'.$row['task_name'].'</span>';
+		$link['text'] = ($row['task_name']);
+		$link['style'] = ('color:' . bestColor($row['color']) 
+						  . ';background-color:#' . $row['color']);
 
-	// determine which day(s) to display the task
-		$start = new CDate( $row['task_start_date'] );
-		$end = $row['task_end_date'] ? new CDate( $row['task_end_date'] ) : null;
+		// determine which day(s) to display the task
+		$start = new CDate($row['task_start_date']);
+		$end = $row['task_end_date'] ? new CDate($row['task_end_date']) : null;
 		$durn = $row['task_duration'];
 		$durnType = $row['task_duration_type'];
-
-		if (($start->after( $startPeriod ) || $start->equals($startPeriod) ) && ($start->before( $endPeriod ) || $start->equals($endPeriod) ) ) {
+		
+		if (($start->after($startPeriod) || $start->equals($startPeriod)) 
+		    && ($start->before($endPeriod) || $start->equals($endPeriod))) {
 			$temp = $link;
-			$temp['alt'] = "START [".$row['task_duration'].' '.$AppUI->_( $durnTypes[$row['task_duration_type']] )."]\n".$link['alt'];
+			$temp['alt'] = ('START [' . $row['task_duration'] . ' ' 
+			                . $AppUI->_($durnTypes[$row['task_duration_type']]) . "]\n" 
+			                . $link['alt']);
 			if ($a != 'day_view') {
-				$temp['text'] = dPshowImage(dPfindImage('block-start-16.png')).$temp['text'];
+				$temp['text'] = (dPshowImage(dPfindImage('block-start-16.png')) . $temp['text']);
 			}
-			$links[$start->format( FMT_TIMESTAMP_DATE )][] = $temp;
+			$links[$start->format(FMT_TIMESTAMP_DATE)][] = $temp;
 		}
-		if ($end && $end->after( $startPeriod ) && $end->before( $endPeriod )
-				&& $start->before( $end )) {
-
+		if ($end && $start->before($end) 
+			&& ($end->after($startPeriod) || $end->equals($startPeriod)) 
+			|| ($end->before($endPeriod) || $end->equals($endPeriod))) {
 			$temp = $link;
-			$temp['alt'] = "FINISH\n".$link['alt'];
+			$temp['alt'] = ("FINISH\n" . $link['alt']);
 			if ($a != 'day_view') {
 				$temp['text'].= dPshowImage(dPfindImage('block-end-16.png'));
 			}
-			$links[$end->format( FMT_TIMESTAMP_DATE )][] = $temp;
-
+			$links[$end->format(FMT_TIMESTAMP_DATE)][] = $temp;
 		}
-	// convert duration to days
-		if ($durnType < 24.0 ) {
+		// convert duration to days
+		if ($durnType < 24.0) {
 			if ($durn > $dPconfig['daily_working_hours']) {
 				$durn /= $dPconfig['daily_working_hours'];
 			} else {
@@ -66,31 +74,31 @@ function getTaskLinks( $startPeriod, $endPeriod, &$links, $strMaxLen, $company_i
 		} else {
 			$durn *= ($durnType / 24.0);
 		}
-	// fill in between start and finish based on duration
-	// notes:
+		// fill in between start and finish based on duration
+		// notes:
 		// start date is not in a future month, must be this or past month
 		// start date is counted as one days work
 		// business days are not taken into account
-			$target = $start;
-			$target->addSeconds( $durn*$sid );
-
-			if (Date::compare( $target, $startPeriod ) < 0) {
-				continue;
-			}
-			if (Date::compare( $start, $startPeriod ) > 0) {
-				$temp = $start;
-				$temp->addSeconds( $sid );
-			} else {
-				$temp = $startPeriod;
-			}
-
-			// Optimised for speed, AJD.
-			while (Date::compare( $endPeriod, $temp ) > 0 
-			    && Date::compare($target, $temp) > 0
-			    && ( $end == null || $temp->before($end) ) ) {
-				$links[$temp->format( FMT_TIMESTAMP_DATE )][] = $link;
-				$temp->addSeconds( $sid );
-			}
+		$target = $start;
+		$target->addSeconds($durn*$sid);
+		
+		if (Date::compare($target, $startPeriod) < 0) {
+			continue;
+		}
+		if (Date::compare($start, $startPeriod) > 0) {
+			$temp = $start;
+			$temp->addSeconds($sid);
+		} else {
+			$temp = $startPeriod;
+		}
+		
+		// Optimised for speed, AJD.
+		while (Date::compare($endPeriod, $temp) > 0 
+		       && Date::compare($target, $temp) > 0
+		       && ($end == null || $temp->before($end))) {
+			$links[$temp->format(FMT_TIMESTAMP_DATE)][] = $link;
+			$temp->addSeconds($sid);
+		}
 	}
 }
 ?>

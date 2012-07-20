@@ -1,4 +1,8 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
 $config = array(
 	'mod_name' => 'Resources',
 	'mod_version' => '1.0.1',
@@ -68,8 +72,9 @@ class SResource {
 		$q->addInsert('resource_type_name', 'Venue');
 		$ok = $ok && $q->exec();
 		
-		if (!$ok)
+		if (!$ok) {
 			return false;
+		}
 		return null;
 	}
 
@@ -88,21 +93,21 @@ class SResource {
 	}
 
 	function upgrade($old_version) {
-		switch ($old_version) {
-			case "1.0":
-			$q = new DBQuery;
-			$q->addTable('resources');
-			$q->addField('resource_key', "varchar(64) not null default ''");
-			$q->exec();
-//			db_exec("ALTER TABLE resources ADD resource_key varchar(64) not null default ''");
-			if ( db_error())
-				return false;
-				// FALLTHROUGH
-			case "1.0.1":
-				break;
-		}
-		return true;
-	}
+	  switch ($old_version) {
+		case "1.0":
+		  $q = new DBQuery;
+		  $q->addTable('resources');
+		  $q->addField('resource_key', "varchar(64) not null default ''");
+		  $q->exec();
+		  if (db_error()) {
+			return false;
+		  }
+		  // FALLTHROUGH
+		case "1.0.1":
+		  break;
+	  }
+	  return true;
+    }
 }
 
 ?>

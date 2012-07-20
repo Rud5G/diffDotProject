@@ -1,15 +1,19 @@
-<?php /* PUBLIC $Id: color_selector.php,v 1.5 2005/03/13 11:38:23 gregorerhardt Exp $ */
-$callback = isset( $_GET['callback'] ) ? $_GET['callback'] : 0;
+<?php /* PUBLIC $Id: color_selector.php 5893 2009-07-01 21:51:45Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
+
+$callback = isset($_GET['callback']) ? $_GET['callback'] : 0;
 ?>
 <script language="javascript">
-	function setClose(color){
+	function setClose(color) {
 		window.opener.<?php echo $callback;?>(color);
 		window.close();
 	}
 </script>
 <?php
-	$colors = dPgetSysVal( 'ProjectColors' );
-	if($dPconfig['restrict_color_selection']){
+	$colors = dPgetSysVal('ProjectColors');
+	if ($dPconfig['restrict_color_selection']) {
 ?>
 <table border="0" cellpadding="1" cellspacing="2" width="292" align="center">
 	<tr>
@@ -18,7 +22,7 @@ $callback = isset( $_GET['callback'] ) ? $_GET['callback'] : 0;
 		</td>
 	</tr>
 	<?php
-		foreach($colors as $key=>$value){
+		foreach ($colors as $key=>$value) {
 	?>
 	<tr>
 		<td style="background-color:#<?php echo $value?>; border: 1px solid black;cursor: pointer;" width="30" onClick="setClose('<?php echo $value?>')">&nbsp;</td>
@@ -41,8 +45,8 @@ $callback = isset( $_GET['callback'] ) ? $_GET['callback'] : 0;
 			<select name="" class="text" onchange="javascript:setClose(this.options[this.selectedIndex].value)">
 				<option value="0">- - <?php echo $AppUI->_('Preset');?> - -</option>
 <?php
-				foreach($colors as $key=>$value){
-					echo "<option value=\"$value\">$key</option>\n";
+				foreach ($colors as $key=>$value) {
+					echo '<option value="' . $value . '">' . $key . "</option>\n";
 				}
 ?>
 			</select>

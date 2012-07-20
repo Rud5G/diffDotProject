@@ -1,5 +1,5 @@
 #
-# $Id: upgrade_201_to_202.sql,v 1.1.2.1 2006/04/21 07:25:47 ajdonnison Exp $
+# $Id: upgrade_201_to_202.sql 4844 2007-03-17 18:52:57Z caseydk $
 # 
 # DO NOT USE THIS SCRIPT DIRECTLY - USE THE INSTALLER INSTEAD.
 #
@@ -12,9 +12,9 @@ UPDATE `config` SET `config_name` = 'check_task_dates' WHERE `config_name` = 'ch
 
 # 20060321
 # Backport of task reminders.
-INSERT INTO `config` VALUES ('', 'task_reminder_control', 'false', 'task_reminder', 'checkbox');
-INSERT INTO `config` VALUES ('', 'task_reminder_days_before', '1', 'task_reminder', 'text');
-INSERT INTO `config` VALUES ('', 'task_reminder_repeat', '100', 'task_reminder', 'text');
+INSERT INTO `config` VALUES (null, 'task_reminder_control', 'false', 'task_reminder', 'checkbox');
+INSERT INTO `config` VALUES (null, 'task_reminder_days_before', '1', 'task_reminder', 'text');
+INSERT INTO `config` VALUES (null, 'task_reminder_repeat', '100', 'task_reminder', 'text');
 
 # 20060421
 # Fixups for grouping of configs

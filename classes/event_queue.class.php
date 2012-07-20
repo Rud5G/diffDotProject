@@ -1,5 +1,5 @@
 <?php
-// $Id: event_queue.class.php,v 1.7 2005/04/18 07:34:57 ajdonnison Exp $
+// $Id: event_queue.class.php 5872 2009-04-25 00:09:56Z merlinyoda $
 
 /**
  * Event handling queue class.
@@ -10,6 +10,10 @@
  *
  * Copyright 2005, the dotProject team.
  */
+
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
 
 class EventQueue {
 
@@ -121,12 +125,24 @@ class EventQueue {
 			include_once $AppUI->getModuleClass($fields['queue_module']);
 
 		$args = unserialize($fields['queue_data']);
-		if (strpos($fields['queue_callback'], '::') !== false) {
+		if (mb_strpos($fields['queue_callback'], '::') !== false) {
 			list($class, $method) = explode('::', $fields['queue_callback']);
+			if (!class_exists($class)) {
+				dprint(__FILE__, __LINE__, 2, "Cannot process event: Class $class does not exist");
+				return false;
+			}
 			$object = new $class;
+			if (!method_exists($object, $method)) {
+				dprint(__FILE__, __LINE__, 2, "Cannot process event: Method $class::$method does not exist");
+				return false;
+			}
 			return $object->$method($fields['queue_module'], $fields['queue_type'], $fields['queue_origin_id'], $fields['queue_owner'], $args);
 		} else {
 			$method = $fields['queue_callback'];
+			if (!function_exists($method)) {
+				dprint(__FILE__, __LINE__, 2, "Cannot process event: Function $method does not exist");
+				return false;
+			}
 			return $method($fields['queue_module'], $fields['queue_type'], $fields['queue_origin_id'], $fields['queue_owner'], $args);
 		}
 	}

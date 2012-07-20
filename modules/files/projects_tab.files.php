@@ -1,6 +1,41 @@
-<?php /* PROJECTS $Id: projects_tab.files.php,v 1.1 2004/09/17 15:56:54 cyberhorse Exp $ */
-GLOBAL $AppUI, $project_id, $deny, $canRead, $canEdit, $dPconfig;
+<?php /* PROJECTS $Id: projects_tab.files.php 6038 2010-10-03 05:49:01Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
+
+GLOBAL $AppUI, $project_id, $deny, $canRead, $canEdit, $dPconfig, $cfObj, $m;
+require_once($AppUI->getModuleClass('files'));
+
+global $allowed_folders_ary, $denied_folders_ary, $limited;
+
+$cfObj = new CFileFolder();
+$allowed_folders_ary = $cfObj->getAllowedRecords($AppUI->user_id);
+$denied_folders_ary = $cfObj->getDeniedRecords($AppUI->user_id);
+
+$limited = ((count($allowed_folders_ary) < $cfObj->countFolders()) ? true : false);
+
+if (!$limited) {
+	$canEdit = true;
+} else if ($limited && array_key_exists($folder, $allowed_folders_ary)) {
+	$canEdit = true;
+} else {
+	$canEdit = false;
+}
 
 $showProject = false;
-require( dPgetConfig('root_dir') . '/modules/files/index_table.php' );
+
+
+if (getPermission('files', 'edit')) { 
+	echo ('<a href="?m=files&amp;a=addedit&amp;project_id=' . $project_id . '">' 
+	      . $AppUI->_('Attach a file') . '</a>');
+	echo dPshowImage(dPfindImage('stock_attach-16.png', $m), 16, 16, ''); 
+}
+
+$canAccess_folders = getPermission('file_folders', 'access');
+if ($canAccess_folders) {
+	$folder = dPgetParam($_GET, 'folder', 0);
+	require(DP_BASE_DIR . '/modules/files/folders_table.php');
+} else if (getPermission('files', 'view')) {
+	require(DP_BASE_DIR . '/modules/files/index_table.php');
+}
 ?>

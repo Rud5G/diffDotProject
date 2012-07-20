@@ -1,36 +1,45 @@
-<?php /* CONTACTS $Id: addedit.php,v 1.35.2.1 2005/11/21 04:37:54 pedroix Exp $ */
-$contact_id = intval( dPgetParam( $_GET, 'contact_id', 0 ) );
-$company_id = intval( dPgetParam( $_REQUEST, 'company_id', 0 ) );
-$company_name = dPgetParam( $_REQUEST, 'company_name', null );
+<?php /* CONTACTS $Id: addedit.php 6038 2010-10-03 05:49:01Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
+$contact_id = intval(dPgetParam($_GET, 'contact_id', 0));
+$company_id = intval(dPgetParam($_REQUEST, 'company_id', 0));
+$company_name = dPgetParam($_REQUEST, 'company_name', null);
 
 // check permissions for this record
-$perms =& $AppUI->acl();
-if (! ($canEdit = $perms->checkModuleItem( 'contacts', 'edit', $contact_id )) ) {
-	$AppUI->redirect( "m=public&a=access_denied" );
+$canEdit = getPermission($m, 'edit', $contact_id);
+if (!(($canEdit && $contact_id) || ($canAuthor && !($contact_id)))) {
+	$AppUI->redirect('m=public&a=access_denied');
 }
 
 // load the record data
 $msg = '';
 $row = new CContact();
-$canDelete = $row->canDelete( $msg, $contact_id );
 
-if (!$row->load( $contact_id ) && $contact_id > 0) {
-	$AppUI->setMsg( 'Contact' );
-	$AppUI->setMsg( "invalidID", UI_MSG_ERROR, true );
+$canDelete = $row->canDelete($msg, $contact_id);
+if ($msg == $AppUI->_('contactsDeleteUserError', UI_OUTPUT_JS)) {
+	$userDeleteProtect=true;
+}
+
+if (!$row->load($contact_id) && $contact_id > 0) {
+	$AppUI->setMsg('Contact');
+	$AppUI->setMsg("invalidID", UI_MSG_ERROR, true);
 	$AppUI->redirect();
 } else if ($row->contact_private && $row->contact_owner != $AppUI->user_id
 	&& $row->contact_owner && $contact_id != 0) {
 // check only owner can edit
-	$AppUI->redirect( "m=public&a=access_denied" );
+	$AppUI->redirect('m=public&a=access_denied');
 }
 
 // setup the title block
 $ttl = $contact_id > 0 ? "Edit Contact" : "Add Contact";
-$titleBlock = new CTitleBlock( $ttl, 'monkeychat-48.png', $m, "$m.$a" );
-$titleBlock->addCrumb( "?m=contacts", "contacts list" );
-if ($canEdit && $contact_id) {
-	$titleBlock->addCrumbDelete( 'delete contact', $canDelete, $msg );
+$titleBlock = new CTitleBlock($ttl, 'monkeychat-48.png', $m, "$m.$a");
+$titleBlock->addCrumb("?m=contacts", "contacts list");
+if ($canDelete && $contact_id) {
+	$titleBlock->addCrumbDelete('delete contact', $canDelete, $msg);
 }
+
 $titleBlock->show();
 $company_detail = $row->getCompanyDetails();
 $dept_detail = $row->getDepartmentDetails();
@@ -42,7 +51,7 @@ if ($contact_id == 0 && $company_id > 0) {
 
 ?>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
 <?php
 	echo "window.company_id=" . dPgetParam($company_detail, 'company_id', 0) . ";\n";
 	echo "window.company_value='" . addslashes(dPgetParam($company_detail, 'company_name', "")) . "';\n";
@@ -51,10 +60,10 @@ if ($contact_id == 0 && $company_id > 0) {
 function submitIt() {
 	var form = document.changecontact;
 	if (form.contact_last_name.value.length < 1) {
-		alert( "<?php echo $AppUI->_('contactsValidName', UI_OUTPUT_JS);?>" );
+		alert("<?php echo $AppUI->_('contactsValidName', UI_OUTPUT_JS);?>");
 		form.contact_last_name.focus();
 	} else if (form.contact_order_by.value.length < 1) {
-		alert( "<?php echo $AppUI->_('contactsOrderBy', UI_OUTPUT_JS);?>" );
+		alert("<?php echo $AppUI->_('contactsOrderBy', UI_OUTPUT_JS);?>");
 		form.contact_order_by.focus();
 	} else {
 		form.submit();
@@ -62,11 +71,14 @@ function submitIt() {
 }
 
 function popDepartment() {
-//        window.open('./index.php?m=public&a=selector&dialog=1&callback=setDepartment&table=departments&hide_company=1&company_id=' + window.company_id, 'department','left=50,top=50,height=250,width=400,resizable');
-	window.open("./index.php?m=contacts&a=select_contact_company&dialog=1&table_name=departments&company_id="+window.company_id, "company", "left=50,top=50,height=250,width=400,resizable");
+//due to a bug in Firefox we CANNOT do a window open with &amp; separating the parameters
+//this bug does not occur if the window open occurs in an onclick event
+//this bug does NOT occur in Internet explorer
+//        window.open('./index.php?m=public&amp;a=selector&amp;dialog=1&amp;callback=setDepartment&amp;table=departments&amp;hide_company=1&amp;company_id=' + window.company_id, 'department','left=50,top=50,height=250,width=400,resizable');
+	window.open("?m=contacts&a=select_contact_company&dialog=1&table_name=departments&company_id="+window.company_id, "company", "left=50,top=50,height=250,width=400,resizable");
 }
 
-function setDepartment( key, val ){
+function setDepartment(key, val) {
 	var f = document.changecontact;
  	if (val != '') {
     	f.contact_department.value = key;
@@ -75,16 +87,19 @@ function setDepartment( key, val ){
 }
 
 function popCompany() {
-//        window.open('./index.php?m=public&a=selector&dialog=1&callback=setCompany&table=companies', 'company','left=50,top=50,height=250,width=400,resizable');
-	window.open("./index.php?m=contacts&a=select_contact_company&dialog=1&table_name=companies&company_id=<?php echo $company_detail['company_id'];?>", "company", "left=50,top=50,height=250,width=400,resizable");
+//due to a bug in Firefox we CANNOT do a window open with &amp; separating the parameters
+//this bug does not occur if the window open occurs in an onclick event
+//this bug does NOT occur in Internet explorer
+//        window.open('./index.php?m=public&amp;a=selector&amp;dialog=1&amp;callback=setCompany&amp;table=companies', 'company','left=50,top=50,height=250,width=400,resizable');
+	window.open("?m=contacts&a=select_contact_company&dialog=1&table_name=companies&company_id=<?php echo $company_detail['company_id'];?>", "company", "left=50,top=50,height=250,width=400,resizable");
 }
 
-function setCompany( key, val ){
+function setCompany(key, val) {
 	var f = document.changecontact;
  	if (val != '') {
     	f.contact_company.value = key;
 			f.contact_company_name.value = val;
-    	if ( window.company_id != key ){
+    	if (window.company_id != key) {
     		f.contact_department.value = "";
 				f.contact_department_name.value = "";
     	}
@@ -93,15 +108,25 @@ function setCompany( key, val ){
     }
 }
 
-function delIt(){
+function delIt() {
+<?php
+if ($userDeleteProtect) {
+?>
+	alert("<?php echo $AppUI->_('contactsDeleteUserError', UI_OUTPUT_JS);?>");
+<?php
+} else {
+?>
 	var form = document.changecontact;
-	if(confirm( "<?php echo $AppUI->_('contactsDelete', UI_OUTPUT_JS);?>" )) {
+	if (confirm("<?php echo $AppUI->_('contactsDelete', UI_OUTPUT_JS);?>")) {
 		form.del.value = "<?php echo $contact_id;?>";
 		form.submit();
 	}
+<?php
+} 
+?>
 }
 
-function orderByName( x ){
+function orderByName(x) {
 	var form = document.changecontact;
 	if (x == "name") {
 		form.contact_order_by.value = form.contact_last_name.value + ", " + form.contact_first_name.value;
@@ -112,14 +137,12 @@ function orderByName( x ){
 
 function companyChange() {
 	var f = document.changecontact;
-	if ( f.contact_company.value != window.company_value ){
+	if (f.contact_company.value != window.company_value) {
 		f.contact_department.value = "";
 	} 
 }
 
 </script>
-
-<table border="0" cellpadding="4" cellspacing="0" width="100%" class="std">
 
 <form name="changecontact" action="?m=contacts" method="post">
 	<input type="hidden" name="dosql" value="do_contact_aed" />
@@ -129,62 +152,64 @@ function companyChange() {
 	<input type="hidden" name="contact_id" value="<?php echo $contact_id;?>" />
 	<input type="hidden" name="contact_owner" value="<?php echo $row->contact_owner ? $row->contact_owner : $AppUI->user_id;?>" />
 
+<table border="0" cellpadding="4" cellspacing="0" width="100%" class="std" summary="contact information">
 <tr>
 	<td colspan="2">
-		<table border="0" cellpadding="1" cellspacing="1">
+		<table border="0" cellpadding="1" cellspacing="1" summary="contact name">
 		<tr>
 			<td align="right"><?php echo $AppUI->_('First Name');?>:</td>
 			<td>
-				<input type="text" class="text" size=25 name="contact_first_name" value="<?php echo @$row->contact_first_name;?>" maxlength="50" />
+				<input type="text" class="text" size="25" name="contact_first_name" value="<?php echo @$row->contact_first_name;?>" maxlength="50" />
 			</td>
 		</tr>
 		<tr>
 			<td align="right">&nbsp;&nbsp;<?php echo $AppUI->_('Last Name');?>:</td>
 			<td>
-				<input type="text" class="text" size=25 name="contact_last_name" value="<?php echo @$row->contact_last_name;?>" maxlength="50" <?php if($contact_id==0){?> onBlur="orderByName('name')"<?php }?> />
-				<a href="#" onClick="orderByName('name')">[<?php echo $AppUI->_('use in display');?>]</a>
+				<input type="text" class="text" size="25" name="contact_last_name" value="<?php echo @$row->contact_last_name;?>" maxlength="50" <?php if ($contact_id==0) {?> onblur="javascript:orderByName('name')"<?php }?> />
+				<a href="#" onclick="javascript:orderByName('name')">[<?php echo $AppUI->_('use in display');?>]</a>
 			</td>
 		</tr>
 		<tr>
 			<td align="right" width="100"><?php echo $AppUI->_('Display Name');?>: </td>
 			<td>
-				<input type="text" class="text" size=25 name="contact_order_by" value="<?php echo @$row->contact_order_by;?>" maxlength="50" />
+				<input type="text" class="text" size="25" name="contact_order_by" value="<?php echo @$row->contact_order_by;?>" maxlength="50" />
 			</td>
 		</tr>
 		<tr>
-			<td align="right" width="100"><?php echo $AppUI->_('Private Entry');?>: </td>
+			<td align="right" width="100"><label for="contact_private"><?php echo $AppUI->_('Private Entry');?>:</label> </td>
 			<td>
-				<input type="checkbox" value="1" name="contact_private" <?php echo (@$row->contact_private ? 'checked' : '');?> />
+				<input type="checkbox" value="1" name="contact_private" id="contact_private" <?php echo (@$row->contact_private ? 'checked="checked"' : '');?> />
 			</td>
 		</tr>
 		</table>
 	</td>
 </tr>
+<tr>
 	<td valign="top" width="50%">
-		<table border="0" cellpadding="1" cellspacing="1" class="details" width="100%">
+		<table border="0" cellpadding="1" cellspacing="1" class="details" width="100%" summary="contact details">
 		<tr>
 			<td align="right" width="100"><?php echo $AppUI->_('Job Title');?>:</td>
-			<td nowrap>
+			<td nowrap="nowrap">
 				<input type="text" class="text" name="contact_job" value="<?php echo @$row->contact_job;?>" maxlength="100" size="25" />
 			</td>
 		</tr>
 		<tr>
 			<td align="right" width="100"><?php echo $AppUI->_('Company');?>:</td>
-			<td nowrap>
+			<td nowrap="nowrap">
 				<input type="text" class="text" name="contact_company_name" value="<?php 
 					echo $company_detail['company_name'];
 					?>" maxlength="100" size="25" />
 				<input type="button" class="button" value="<?php echo $AppUI->_('select company...');?>..." onclick="popCompany()" />
-				<input type='hidden' name='contact_company' value="<?php echo $company_detail['company_id']; ?>">
-				<a href="#" onClick="orderByName('company')">[<?php echo $AppUI->_('use in display');?>]</a>
+				<input type='hidden' name='contact_company' value="<?php echo $company_detail['company_id']; ?>" />
+				<a href="#" onclick="orderByName('company')">[<?php echo $AppUI->_('use in display');?>]</a>
 				</td>
 		</tr>
 		<tr>
 			<td align="right" width="100"><?php echo $AppUI->_('Department');?>:</td>
-			<td nowrap>
+			<td nowrap="nowrap">
 				<input type="text" class="text" name="contact_department_name" value="<?php echo $dept_detail['dept_name'];?>" maxlength="100" size="25" />
 
-				<input type='hidden' name='contact_department' value='<?php echo $dept_detail['dept_id'];?>'>
+				<input type='hidden' name='contact_department' value='<?php echo $dept_detail['dept_id'];?>' />
 				<input type="button" class="button" value="<?php echo $AppUI->_('select department...');?>" onclick="popDepartment()" />
 				</td>
 		</tr>
@@ -217,6 +242,10 @@ function companyChange() {
 			<td><input type="text" class="text" name="contact_zip" value="<?php echo @$row->contact_zip;?>" maxlength="11" size="25" /></td>
 		</tr>
 		<tr>
+			<td align="right"><?php echo $AppUI->_('Country');?>:</td>
+			<td><input type="text" class="text" name="contact_country" value="<?php echo @$row->contact_country;?>" maxlength="30" size="25" /></td>
+		</tr>
+		<tr>
 			<td align="right" width="100"><?php echo $AppUI->_('Phone');?>:</td>
 			<td>
 				<input type="text" class="text" name="contact_phone" value="<?php echo @$row->contact_phone;?>" maxlength="30" size="25" />
@@ -242,7 +271,7 @@ function companyChange() {
 		</tr>
 		<tr>
 			<td align="right" width="100"><?php echo $AppUI->_('Email');?>:</td>
-			<td nowrap>
+			<td nowrap="nowrap">
 				<input type="text" class="text" name="contact_email" value="<?php echo @$row->contact_email;?>" maxlength="255" size="25" />
 			</td>
 		</tr>
@@ -288,27 +317,26 @@ function companyChange() {
 				<input type="text" class="text" name="contact_yahoo" value="<?php echo @$row->contact_yahoo;?>" maxlength="255" size="25" />
 			</td>
 		</tr>
-		</tr>
 		<tr>
 			<td align="right"><?php echo $AppUI->_('Birthday');?>:</td>
-			<td nowrap>
-				<input type="text" class="text" name="contact_birthday" value="<?php echo @substr($row->contact_birthday, 0, 10);?>" maxlength="10" size="25" />(<?php echo $AppUI->_('yyyy-mm-dd');?>)
+			<td nowrap="nowrap">
+				<input type="text" class="text" name="contact_birthday" value="<?php echo @mb_substr($row->contact_birthday, 0, 10);?>" maxlength="10" size="25" />(<?php echo $AppUI->_('yyyy-mm-dd');?>)
 			</td>
 		</tr>
 		</table>
 	</td>
 	<td valign="top" width="50%">
 		<strong><?php echo $AppUI->_('Contact Notes');?></strong><br />
-		<textarea class="textarea" name="contact_notes" rows="20" cols="40"><?php echo @$row->contact_notes;?></textarea></td>
+		<textarea class="textarea" name="contact_notes" rows="20" cols="40"><?php echo @$row->contact_notes;?></textarea>
 	</td>
 </tr>
 <tr>
 	<td>
-		<input type="button" value="<?php echo $AppUI->_('back');?>" class="button" onClick="javascript:window.location='./index.php?m=contacts';" />
+		<input type="button" value="<?php echo $AppUI->_('back');?>" class="button" onclick="javascript:window.location='./index.php?m=contacts';" />
 	</td>
 	<td align="right">
-		<input type="button" value="<?php echo $AppUI->_('submit');?>" class="button" onClick="submitIt()" />
+		<input type="button" value="<?php echo $AppUI->_('submit');?>" class="button" onclick="javascript:submitIt()" />
 	</td>
 </tr>
-</form>
 </table>
+</form>

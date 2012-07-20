@@ -1,25 +1,41 @@
-<?php /* ADMIN $Id: vw_usr_perms.php,v 1.29 2005/03/28 04:41:11 ajdonnison Exp $ */
+<?php /* ADMIN $Id: vw_usr_perms.php 6038 2010-10-03 05:49:01Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
 GLOBAL $AppUI, $user_id, $canEdit, $canDelete, $tab;
 
 $perms =& $AppUI->acl();
 $module_list = $perms->getModuleList();
+
+//get list of 'real' modules
 $pgos = array();
 $q  = new DBQuery;
 $q->addTable('modules', 'm');
 $q->addQuery('mod_id, mod_name, permissions_item_table');
 $q->addWhere('permissions_item_table is not null');
 $q->addWhere("permissions_item_table <> ''");
-$pgo_list = $q->loadHashList('mod_name');
+$module_pgo_list = $q->loadHashList('mod_name');
 $q->clear();
+
+//list of additional 'pseudo-modules'
+$pseudo_module_pgo_list = array('File Folders' => array('mod_id' => -1, 
+                                                        'mod_name' => 'file_folders', 
+                                                        'permissions_item_table' => 'file_folders')
+                               );
+
+//combine modules and 'pseudo-modules'
+$pgo_list = arrayMerge($module_pgo_list, $pseudo_module_pgo_list);
 
 // Build an intersection array for the modules and their listing
 $modules = array();
 $offset = 0;
 foreach ($module_list as $module) {
-  $modules[ $module['type'] . "," . $module['id']] = $module['name'];
-  if ($module['type'] = 'mod' && isset($pgo_list[$module['name']]))
-    $pgos[$offset] = $pgo_list[$module['name']]['permissions_item_table'];
-  $offset++;
+	$modules[ $module['type'] . "," . $module['id']] = $module['name'];
+	if ($module['type'] = 'mod' && isset($pgo_list[$module['name']])) {
+		$pgos[$offset] = $pgo_list[$module['name']]['permissions_item_table'];
+	} 
+	$offset++;
 }
 $count = 0;
 
@@ -38,7 +54,7 @@ $perm_list = $perms->getPermissionList();
 // else users would be able to arbitrarily run 'bad' functions
 if ($canEdit) {
 ?>
-function editPerm( id, gon, it, vl, nm ) {
+function editPerm(id, gon, it, vl, nm) {
 /*
 	id = Permission_id
 	gon =permission_grant_on
@@ -46,7 +62,7 @@ function editPerm( id, gon, it, vl, nm ) {
 	vl =permission_value
 	nm = text representation of permission_value
 */
-//alert( 'id='+id+'\ngon='+gon+'\nit='+it+'\nvalue='+vl+'\nnm='+nm);
+//alert('id='+id+'\ngon='+gon+'\nit='+it+'\nvalue='+vl+'\nnm='+nm);
 	var f = document.frmPerms;
 
 	f.sqlaction2.value = "<?php echo $AppUI->_('edit'); ?>";
@@ -54,7 +70,7 @@ function editPerm( id, gon, it, vl, nm ) {
 	f.permission_id.value = id;
 	f.permission_item.value = it;
 	f.permission_item_name.value = nm;
-	for(var i=0, n=f.permission_grant_on.options.length; i < n; i++) {
+	for (var i=0, n=f.permission_grant_on.options.length; i < n; i++) {
 		if (f.permission_module.options[i].value == gon) {
 			f.permission_module.selectedIndex = i;
 			break;
@@ -64,7 +80,7 @@ function editPerm( id, gon, it, vl, nm ) {
 	f.permission_item_name.value = nm;
 }
 
-function clearIt(){
+function clearIt() {
 	var f = document.frmPerms;
 	f.sqlaction2.value = "<?php echo $AppUI->_('add'); ?>";
 	f.permission_id.value = 0;
@@ -72,7 +88,7 @@ function clearIt(){
 }
 
 function delIt(id) {
-	if (confirm( 'Are you sure you want to delete this permission?' )) {
+	if (confirm('Are you sure you want to delete this permission?')) {
 		var f = document.frmPerms;
 		f.del.value = 1;
 		f.permission_id.value = id;
@@ -82,7 +98,7 @@ function delIt(id) {
 
 var tables = new Array;
 <?php
-	foreach ($pgos as $key => $value){
+	foreach ($pgos as $key => $value) {
 		// Find the module id in the modules array
 		echo "tables['$key'] = '$value';\n";
 	}
@@ -93,15 +109,15 @@ function popPermItem() {
 	var pgo = f.permission_module.selectedIndex;
 
 	if (!(pgo in tables)) {
-		alert( '<?php echo $AppUI->_('No list associated with this Module.', UI_OUTPUT_JS); ?>' );
+		alert('<?php echo $AppUI->_('No list associated with this Module.', UI_OUTPUT_JS); ?>');
 		return;
 	}
 	f.permission_table.value = tables[pgo];
-	window.open('./index.php?m=public&a=selector&dialog=1&callback=setPermItem&table=' + tables[pgo], 'selector', 'left=50,top=50,height=250,width=400,resizable')
+	window.open('?m=public&'+'a=selector&'+'dialog=1&'+'callback=setPermItem&'+'table=' + tables[pgo], 'selector', 'left=50,top=50,height=250,width=400,resizable')
 }
 
 // Callback function for the generic selector
-function setPermItem( key, val ) {
+function setPermItem(key, val) {
 	var f = document.frmPerms;
 	if (val != '') {
 		f.permission_item.value = key;
@@ -121,14 +137,15 @@ function setPermItem( key, val ) {
 
 <table width="100%" border="0" cellpadding="2" cellspacing="1" class="tbl">
 <tr>
-	<th width="100%"><?php echo $AppUI->_('Item');?></th>
+	<th width="50%"><?php echo $AppUI->_('Module');?></th>
+	<th width="50%"><?php echo $AppUI->_('Item');?></th>
 	<th nowrap><?php echo $AppUI->_('Type');?></th>
 	<th nowrap><?php echo $AppUI->_('Status');?></th>
 	<th>&nbsp;</th>
 </tr>
 
 <?php
-foreach ($user_acls as $acl){
+foreach ($user_acls as $acl) {
 	$buf = '';
 	$permission = $perms->get_acl($acl);
 
@@ -143,17 +160,31 @@ foreach ($user_acls as $acl){
 			foreach ($permission['axo_groups'] as $group_id) {
 				$group_data = $perms->get_group_data($group_id, 'axo');
 				$modlist[] = $AppUI->_($group_data[3]);
+				$itemlist[] = $AppUI->_('ALL');
 			}
 		}
 		if (is_array($permission['axo'])) {
 			foreach ($permission['axo'] as $key => $section) {
+				// Find the module based on the key
+				$mod_info = $perms->get_object_full($key, 'app', 1, 'axo');
+				if ($mod_info['name']) {
+					$modlist[] = $AppUI->_($mod_info['name']);
+				} else {
+					$itemlist[] = $AppUI->_('ALL');
+				}
 				foreach ($section as $id) {
 					$mod_data = $perms->get_object_full($id, $key, 1, 'axo');
-					$modlist[] = $AppUI->_($mod_data['name']);
+					if ($mod_info['name']) {
+						$itemlist[] = $AppUI->_($mod_data['name']);
+					} else {
+						$modlist[] = $AppUI->_($mod_data['name']);
+					}
 				}
 			}
 		}
 		$buf .= implode("<br />", $modlist);
+		$buf .= "</td><td>";
+		$buf .= implode("<br />", $itemlist);
 		$buf .= "</td>";
 		// Item information TODO:  need to figure this one out.
 	// 	$buf .= "<td></td>";
@@ -172,12 +203,12 @@ foreach ($user_acls as $acl){
 		$buf .= "</td>";
 
 		// Allow or deny
-		$buf .= "<td>" . $AppUI->_( $permission['allow'] ? 'allow' : 'deny' ) . "</td>";
+		$buf .= "<td>" . $AppUI->_($permission['allow'] ? 'allow' : 'deny') . "</td>";
 		$buf .= '<td nowrap>';
 		if ($canDelete) {
-			$buf .= "<a href=\"javascript:delIt({$acl});\" title=\"".$AppUI->_('delete')."\">"
-				. dPshowImage( './images/icons/stock_delete-16.png', 16, 16, '' )
-				. "</a>";
+			$buf .= ('<a href="javascript:delIt(' . $acl . ');" title="' . $AppUI->_('delete') 
+			         . '">' . dPshowImage('./images/icons/stock_delete-16.png', 16, 16, '') 
+			         . '</a>');
 		}
 		$buf .= '</td>';
 		
@@ -228,9 +259,9 @@ foreach ($user_acls as $acl){
 	foreach ($perm_list as $perm_id => $perm_name) {
 ?>
 <tr>
-	<td nowrap align='right'><?php echo $AppUI->_($perm_name);?>:</td>
+	<td nowrap="nowrap" align="right"><label for="permission_type_<?php echo $perm_id; ?>"><?php echo $AppUI->_($perm_name);?>:</label></td>
 	<td>
-	  <input type='checkbox' name='permission_type[]' value='<?php echo $perm_id;?>'>
+	  <input type="checkbox" name="permission_type[]" id="permission_type_<?php echo $perm_id; ?>" value="<?php echo $perm_id;?>" />
 	</td>
 </tr>
 <?php
@@ -238,7 +269,7 @@ foreach ($user_acls as $acl){
 ?>
 <tr>
 	<td>
-		<input type="reset" value="<?php echo $AppUI->_('clear');?>" class="button" name="sqlaction" onClick="clearIt();">
+		<input type="reset" value="<?php echo $AppUI->_('clear');?>" class="button" name="sqlaction" onclick="clearIt();">
 	</td>
 	<td align="right">
 		<input type="submit" value="<?php echo $AppUI->_('add');?>" class="button" name="sqlaction2">

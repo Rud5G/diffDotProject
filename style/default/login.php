@@ -1,11 +1,14 @@
-<?php /* STYLE/DEFAULT $Id: login.php,v 1.32 2005/03/31 20:11:15 gregorerhardt Exp $ */
+<?php /* STYLE/DEFAULT $Id: login.php 6050 2010-10-14 21:43:56Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly');
+}
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
 	   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 	<title><?php echo $dPconfig['page_title'];?></title>
-	<meta http-equiv="Content-Type" content="text/html;charset=<?php echo isset( $locale_char_set ) ? $locale_char_set : 'UTF-8';?>" />
+	<meta http-equiv="Content-Type" content="text/html;charset=<?php echo isset($locale_char_set) ? $locale_char_set : 'UTF-8';?>" />
        	<title><?php echo $dPconfig['company_name'];?> :: dotProject Login</title>
 	<meta http-equiv="Pragma" content="no-cache" />
 	<meta name="Version" content="<?php echo @$AppUI->getVersion();?>" />
@@ -14,7 +17,7 @@
 	<link rel="shortcut icon" href="./style/<?php echo $uistyle;?>/images/favicon.ico" type="image/ico" />
 </head>
 
-<body bgcolor="#f0f0f0" onload="document.loginform.username.focus();">
+<body style="background-color: #f0f0f0" onload="document.loginform.username.focus();">
 <br /><br /><br /><br />
 <?php //please leave action argument empty ?>
 <!--form action="./index.php" method="post" name="loginform"-->
@@ -24,11 +27,11 @@
 <input type="hidden" name="lostpass" value="0" />
 <input type="hidden" name="redirect" value="<?php echo $redirect;?>" />
 <tr>
-	<th colspan="2"><em><?php echo $dPconfig['company_name'];?></em></th>
+	<th colspan="2"><em><?php echo dPgetConfig('company_name');?></em></th>
 </tr>
 <tr>
 	<td align="right" nowrap><?php echo $AppUI->_('Username');?>:</td>
-	<td align="left" nowrap><input type="text" size="25" maxlength="20" name="username" class="text" /></td>
+	<td align="left" nowrap><input type="text" size="25" maxlength="255" name="username" class="text" /></td>
 </tr>
 <tr>
 	<td align="right" nowrap><?php echo $AppUI->_('Password');?>:</td>
@@ -54,7 +57,7 @@
 
 	$msg = '';
 	$msg .=  phpversion() < '4.1' ? '<br /><span class="warning">WARNING: dotproject is NOT SUPPORT for this PHP Version ('.phpversion().')</span>' : '';
-	$msg .= function_exists( 'mysql_pconnect' ) ? '': '<br /><span class="warning">WARNING: PHP may not be compiled with MySQL support.  This will prevent proper operation of dotProject.  Please check you system setup.</span>';
+	$msg .= function_exists('mysql_pconnect') ? '': '<br /><span class="warning">WARNING: PHP may not be compiled with MySQL support.  This will prevent proper operation of dotProject.  Please check you system setup.</span>';
 	echo $msg;
 ?>
 </div>

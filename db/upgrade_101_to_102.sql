@@ -1,4 +1,4 @@
-# $Id: upgrade_101_to_102.sql,v 1.5 2004/02/03 00:44:44 ajdonnison Exp $
+# $Id: upgrade_101_to_102.sql 4848 2007-03-17 19:57:01Z caseydk $
 #
 # Upgrade dotProject DB Schema
 # Version 1.0.1 to release 1.0.2
@@ -10,12 +10,14 @@
 # !BACKUP YOU DATABASE BEFORE APPLYING THIS SCRIPT!
 # !                  W A R N I N G                !
 #
+# 00000000
 # add task_departments and contacts to task table
 ALTER TABLE `tasks` ADD `task_departments` CHAR( 100 ) ;
 ALTER TABLE `tasks` ADD `task_contacts` CHAR( 100 ) ;
 
 # add contact_department to contacts table
 ALTER TABLE `contacts` ADD `contact_department` TINYTEXT AFTER `contact_company` ;
+ALTER TABLE `contacts` CHANGE `icon` `contact_icon` VARCHAR( 20 ) NULL DEFAULT 'obj/contact';
 
 # add custom info to tasks
 ALTER TABLE `tasks` ADD `task_custom` LONGTEXT;

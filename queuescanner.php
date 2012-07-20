@@ -1,5 +1,5 @@
 <?php
-	// $Id: queuescanner.php,v 1.4.2.1 2005/09/07 07:26:42 ajdonnison Exp $
+	// $Id: queuescanner.php 5962 2010-03-19 17:51:09Z merlinyoda $
 
 /*
 All files in this work, except the modules/ticketsmith directory, are now
@@ -32,17 +32,18 @@ The full text of the GPL is in the COPYING file.
 	// Function to scan the event queue and execute any functions required.
 
 	require_once 'base.php';
-	require_once "$baseDir/includes/config.php";
-	require_once "$baseDir/includes/main_functions.php";
-	require_once "$baseDir/includes/db_connect.php";
-	require_once "$baseDir/classes/ui.class.php";
-	require_once "$baseDir/classes/event_queue.class.php";
-	require_once "$baseDir/classes/query.class.php";
+	require_once DP_BASE_DIR.'/includes/config.php';
+	require_once DP_BASE_DIR.'/includes/main_functions.php';
+	require_once DP_BASE_DIR.'/includes/db_connect.php';
+	require_once DP_BASE_DIR.'/classes/ui.class.php';
+	require_once DP_BASE_DIR.'/classes/event_queue.class.php';
+	require_once DP_BASE_DIR.'/classes/query.class.php';
 
 	$AppUI = new CAppUI;
+	$AppUI->setUserLocale();
+	$perms =& $AppUI->acl();
 
 	echo "Scanning Queue ...\n";
 	$queue = new EventQueue;
 	$queue->scan();
-	echo "Done, $queue->event_count events processed\n";
-?>
+	echo 'Done, '.$queue->event_count.' events processed'."\n";

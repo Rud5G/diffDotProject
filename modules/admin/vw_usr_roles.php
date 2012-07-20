@@ -1,13 +1,17 @@
-<?php /* ADMIN $Id: vw_usr_roles.php,v 1.10 2005/03/14 02:28:06 gregorerhardt Exp $ */
-GLOBAL $AppUI, $user_id, $canEdit, $canDelete, $tab, $baseDir;
+<?php /* ADMIN $Id: vw_usr_roles.php 6107 2010-12-31 05:04:59Z ajdonnison $ */
+GLOBAL $AppUI, $user_id, $canEdit, $canDelete, $tab;
+
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
 
 //$roles
 // Create the roles class container
-require_once "$baseDir/modules/system/roles/roles.class.php";
+require_once DP_BASE_DIR."/modules/system/roles/roles.class.php";
 
 $perms =& $AppUI->acl();
 $user_roles = $perms->getUserRoles($user_id);
-$crole =& new CRole;
+$crole = new CRole;
 $roles = $crole->getRoles();
 // Format the roles for use in arraySelect
 $roles_arr = array();
@@ -25,7 +29,7 @@ foreach ($roles as $role) {
 if ($canEdit) {
 ?>
 function delIt(id) {
-	if (confirm( 'Are you sure you want to delete this role?' )) {
+	if (confirm('Are you sure you want to delete this role?')) {
 		var f = document.frmPerms;
 		f.del.value = 1;
 		f.role_id.value = id;
@@ -47,7 +51,7 @@ function delIt(id) {
 </tr>
 
 <?php
-foreach ($user_roles as $row){
+foreach ($user_roles as $row) {
 	$buf = '';
 
 	$style = '';
@@ -55,9 +59,8 @@ foreach ($user_roles as $row){
 
 	$buf .= '<td nowrap>';
 	if ($canEdit) {
-		$buf .= "<a href=\"javascript:delIt({$row['id']});\" title=\"".$AppUI->_('delete')."\">"
-			. dPshowImage( './images/icons/stock_delete-16.png', 16, 16, '' )
-			. "</a>";
+		$buf .= ('<a href="javascript:delIt(' . $row['id'] . ');" title="' . $AppUI->_('delete') 
+				 . '">'. dPshowImage('./images/icons/stock_delete-16.png', 16, 16, '') . '</a>');
 	}
 	$buf .= '</td>';
 	
@@ -70,13 +73,13 @@ foreach ($user_roles as $row){
 
 <?php if ($canEdit) {?>
 
-<table cellspacing="1" cellpadding="2" border="0" class="std" width="100%">
 <form name="frmPerms" method="post" action="?m=admin">
 	<input type="hidden" name="del" value="0">
 	<input type="hidden" name="dosql" value="do_userrole_aed">
 	<input type="hidden" name="user_id" value="<?php echo $user_id;?>">
 	<input type="hidden" name="user_name" value="<?php echo $user_name;?>">
 	<input type="hidden" name="role_id" value="">
+<table cellspacing="1" cellpadding="2" border="0" class="std" width="100%">
 <tr>
 	<th colspan='2'><?php echo $AppUI->_('Add Role');?></th>
 </tr>
@@ -85,7 +88,7 @@ foreach ($user_roles as $row){
 </tr>
 <tr>
 	<td>
-		<input type="reset" value="<?php echo $AppUI->_('clear');?>" class="button" name="sqlaction" onClick="clearIt();">
+		<input type="reset" value="<?php echo $AppUI->_('clear');?>" class="button" name="sqlaction" onclick="clearIt();">
 	</td>
 	<td align="right">
 		<input type="submit" value="<?php echo $AppUI->_('add');?>" class="button" name="sqlaction2">

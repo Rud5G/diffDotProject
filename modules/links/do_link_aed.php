@@ -1,9 +1,13 @@
-<?php /* FILES $Id: do_link_aed.php,v 1.1.1.1.2.4 2006/03/19 07:50:27 cyberhorse Exp $ */
-//addlink sql
-$link_id = intval( dPgetParam( $_POST, 'link_id', 0 ) );
-$del = intval( dPgetParam( $_POST, 'del', 0 ) );
+<?php /* FILES $Id: do_link_aed.php 5872 2009-04-25 00:09:56Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-$not = dPgetParam( $_POST, 'notify', '0' );
+//addlink sql
+$link_id = intval(dPgetParam($_POST, 'link_id', 0));
+$del = intval(dPgetParam($_POST, 'del', 0));
+
+$not = dPgetParam($_POST, 'notify', '0');
 if ($not!='0') $not='1';
 
 $obj = new CLink();
@@ -13,25 +17,25 @@ if ($link_id) {
 	$obj->_message = 'added';
 }
 $obj->link_date = date('Y-m-d H:i:s');
-$obj->link_category = intval( dPgetParam( $_POST, 'link_category', 0 ) );
+$obj->link_category = intval(dPgetParam($_POST, 'link_category', 0));
 
-if (!$obj->bind( $_POST )) {
-	$AppUI->setMsg( $obj->getError(), UI_MSG_ERROR );
+if (!$obj->bind($_POST)) {
+	$AppUI->setMsg($obj->getError(), UI_MSG_ERROR);
 	$AppUI->redirect();
 }
 
 // prepare (and translate) the module name ready for the suffix
-$AppUI->setMsg( 'Link' );
+$AppUI->setMsg('Link');
 // delete the link
 if ($del) {
-	$obj->load( $link_id );
+	$obj->load($link_id);
 	if (($msg = $obj->delete())) {
-		$AppUI->setMsg( $msg, UI_MSG_ERROR );
+		$AppUI->setMsg($msg, UI_MSG_ERROR);
 		$AppUI->redirect();
 	} else {
 		if ($not=='1') $obj->notify();
-		$AppUI->setMsg( "deleted", UI_MSG_ALERT, true );
-		$AppUI->redirect( "m=links" );
+		$AppUI->setMsg("deleted", UI_MSG_ALERT, true);
+		$AppUI->redirect("m=links");
 	}
 }
 
@@ -40,11 +44,11 @@ if (!$link_id) {
 }
 
 if (($msg = $obj->store())) {
-        $AppUI->setMsg( $msg, UI_MSG_ERROR );
+        $AppUI->setMsg($msg, UI_MSG_ERROR);
 } else {
         $obj->load($obj->file_id);
         if ($not=='1') $obj->notify();
-        $AppUI->setMsg( $file_id ? 'updated' : 'added', UI_MSG_OK, true );
+        $AppUI->setMsg($file_id ? 'updated' : 'added', UI_MSG_OK, true);
 }
 
 $AppUI->redirect();

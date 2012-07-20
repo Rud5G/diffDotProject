@@ -1,4 +1,4 @@
-<?php /* STYLE/CLASSIC $Id: overrides.php,v 1.3 2003/12/04 21:48:39 jcgonz Exp $ */
+<?php /* STYLE/CLASSIC $Id: overrides.php 1699 2003-12-04 21:48:39Z jcgonz $ */
 ##
 ##	This may override the show function of the CTabBox_core function
 ## Just use the vanilla version for the default case

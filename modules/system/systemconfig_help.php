@@ -1,4 +1,8 @@
-<?php  // $Id: systemconfig_help.php,v 1.2 2005/03/02 06:34:53 ajdonnison Exp $
+<?php  // $Id: systemconfig_help.php 5872 2009-04-25 00:09:56Z merlinyoda $
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
 $cn = $_REQUEST['cn'];
 ?>
 <table cellspacing="0" cellpadding="3" border="0" class="std" width="100%" align="center">

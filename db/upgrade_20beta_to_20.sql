@@ -1,5 +1,5 @@
 #
-# $Id: upgrade_20beta_to_20.sql,v 1.1 2005/04/01 00:28:38 ajdonnison Exp $
+# $Id: upgrade_20beta_to_20.sql 3153 2005-04-01 00:28:38Z ajdonnison $
 # 
 # DO NOT USE THIS SCRIPT DIRECTLY - USE THE INSTALLER INSTEAD.
 #

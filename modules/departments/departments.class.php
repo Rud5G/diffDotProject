@@ -1,4 +1,8 @@
-<?php /* DEPARTMENTS $Id: departments.class.php,v 1.6 2005/03/29 00:01:16 ajdonnison Exp $ */
+<?php /* DEPARTMENTS $Id: departments.class.php 5941 2010-01-05 01:55:05Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
 ##
 ## CDepartment Class
 ##
@@ -23,21 +27,21 @@ class CDepartment extends CDpObject {
 		// empty constructor
 	}
 
-	function load( $oid ) {
+	function load($oid) {
 		$q  = new DBQuery;
 		$q->addTable('departments','dep');
 		$q->addQuery('dep.*');
 		$q->addWhere('dep.dept_id = '.$oid);
 		$sql = $q->prepare();
 		$q->clear();
-		return db_loadObject( $sql, $this );
+		return db_loadObject($sql, $this);
 	}
 
-	function bind( $hash ) {
-		if (!is_array( $hash )) {
-			return get_class( $this )."::bind failed";
+	function bind($hash) {
+		if (!is_array($hash)) {
+			return get_class($this)."::bind failed";
 		} else {
-			bindHashToObject( $hash, $this );
+			bindHashToObject($hash, $this);
 			return NULL;
 		}
 	}
@@ -55,16 +59,16 @@ class CDepartment extends CDpObject {
 
 	function store() {
 		$msg = $this->check();
-		if( $msg ) {
-			return get_class( $this )."::store-check failed - $msg";
+		if ($msg) {
+			return get_class($this)."::store-check failed - $msg";
 		}
-		if( $this->dept_id ) {
-			$ret = db_updateObject( 'departments', $this, 'dept_id', false );
+		if ($this->dept_id) {
+			$ret = db_updateObject('departments', $this, 'dept_id', false);
 		} else {
-			$ret = db_insertObject( 'departments', $this, 'dept_id' );
+			$ret = db_insertObject('departments', $this, 'dept_id');
 		}
-		if( !$ret ) {
-			return get_class( $this )."::store failed <br />" . db_error();
+		if (!$ret) {
+			return get_class($this)."::store failed <br />" . db_error();
 		} else {
 			return NULL;
 		}
@@ -77,7 +81,7 @@ class CDepartment extends CDpObject {
 		$q->addWhere('dep.dept_parent = '.$this->dept_id);
 		$res = $q->exec();
 
-		if (db_num_rows( $res )) {
+		if (db_num_rows($res)) {
 			$q->clear();
 			return "deptWithSub";
 		}
@@ -87,7 +91,7 @@ class CDepartment extends CDpObject {
 		$q->addWhere('p.project_department = '.$this->dept_id);
 		$res = $q->exec();
 
-		if (db_num_rows( $res )) {
+		if (db_num_rows($res)) {
 			$q->clear();
 			return "deptWithProject";
 		}
@@ -105,4 +109,45 @@ class CDepartment extends CDpObject {
 		return $result;
 	}
 }
+
+//writes out a single <option> element for display of departments
+function showchilddept(&$a, $level=1) {
+	global $AppUI, $cBuffer, $department;
+	$s = ('<option value="' . $AppUI->___($a['dept_id']) . '"' 
+	      . ((isset($department) && $department == $a['dept_id']) ? 'selected="selected"' : '') 
+	      . '>');
+
+	for ($y=0; $y < $level; $y++) {
+		$s .= (($y+1 == $level) ? '' : '&nbsp;&nbsp;');
+	}
+	
+	$s .= '&nbsp;&nbsp;' . $AppUI->___($a['dept_name']) . "</option>\n";
+	$cBuffer .= $s;
+
+//	echo $s;
+}
+
+//recursive function to display children departments.
+function findchilddept(&$tarr, $parent, $level=1) {
+	$level = $level+1;
+	$n = count($tarr);
+	for ($x=0; $x < $n; $x++) {
+		if ($tarr[$x]['dept_parent'] == $parent 
+		    && $tarr[$x]['dept_parent'] != $tarr[$x]['dept_id']) {
+			showchilddept($tarr[$x], $level);
+			findchilddept($tarr, $tarr[$x]['dept_id'], $level);
+		}
+	}
+}
+
+function addDeptId($dataset, $parent) {
+	global $dept_ids;
+	foreach ($dataset as $data) {
+		if ($data['dept_parent'] == $parent) {
+			$dept_ids[] = $data['dept_id'];
+			addDeptId($dataset, $data['dept_id']);
+		}
+	}
+}
+
 ?>

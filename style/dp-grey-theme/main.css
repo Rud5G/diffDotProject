@@ -184,7 +184,7 @@ TD.clsBtnOff {
 TD.topBtnOff {
 	color: #FFFFFF;
 	padding: 0 3;
-	tab-index: 0;
+	/* tab-index: 0; //tab index not valid for TD */
 	border: solid #cccccc 2px;
 }
 
@@ -225,7 +225,7 @@ table.std TH {
 	font: 13px verdana, arial, helvetica, sans-serif;
 	font-weight: bold;
 	text-align: center;
-	color: white;
+	color: black;
 	margin-bottom: 0;
 	padding: 1px 1px 1px 1px;
 	list-style-type: disc;
@@ -479,3 +479,14 @@ table.tbl td.event td {
 }
 
 .hidden {display:none;}
+
+th strong {
+  float: left;
+  margin-top: 2px;
+}
+th form {
+  float: right;
+  padding: 0;
+  margin: 0;
+  margin-top: 1px;
+}

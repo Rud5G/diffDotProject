@@ -1,28 +1,31 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
 // Copyright 2004 Adam Donnison <adam@saki.com.au>
-$resource_id = intval(dPgetParam($_GET, "resource_id", null));
-$perms =& $AppUI->acl();
-$canDelete = $perms->checkModuleItem('resources', 'delete', $resource_id);
-$canView = $perms->checkModuleItem('resources', 'view', $resource_id);
-if ( (! $resource_id && ! $perms->checkModule('resources', 'add'))
-  || ! $canView || ! $canEdit ) {
-  $AppUI->redirect('m=public&a=access_denied');
+$resource_id = intval(dPgetParam($_GET, 'resource_id', null));
+
+$canDelete = getPermission('resources', 'delete', $resource_id);
+$canView = getPermission('resources', 'view', $resource_id);
+if ((! $resource_id && ! getPermission('resources', 'add')) || ! $canView || ! $canEdit) {
+	$AppUI->redirect('m=public&a=access_denied');
 }
 
-$obj =& new CResource;
+$obj = new CResource;
 if ($resource_id && ! $obj->load($resource_id)) {
-  $AppUI->setMsg('Resource');
-  $AppUI->setMsg('invalidID', UI_MSG_ERROR, true);
-  $AppUI->redirect();
+	$AppUI->setMsg('Resource');
+	$AppUI->setMsg('invalidID', UI_MSG_ERROR, true);
+	$AppUI->redirect();
 }
 
-$titleBlock =& new CTitleBlock(
-  ($resource_id ? "Edit Resource" : "Add Resource"),
-  'handshake.png', $m, "$m.$a"
+$titleBlock = new CTitleBlock((($resource_id) ? 'Edit Resource' : 'Add Resource'), 
+							   'helpdesk.png', $m, "$m.$a"
 );
-$titleBlock->addCrumb("?m=resources", "resource list");
-if ($resource_id)
-  $titleBlock->addCrumb("?m=resources&a=view&resource_id=$resource_id", "view this resource");
+$titleBlock->addCrumb('?m=resources', 'resource list');
+if ($resource_id) {
+    $titleBlock->addCrumb("?m=resources&amp;a=view&amp;resource_id=$resource_id", 'view this resource');
+}
 $titleBlock->show();
 
 $typelist = $obj->typeSelect();
@@ -35,23 +38,23 @@ $typelist = $obj->typeSelect();
 <td align='center' >
   <table>
 	<tr><td align='right'><?php echo $AppUI->_('Resource ID'); ?></td>
-  <td align='left'><input type='text' size=15 maxlength=64 name=resource_key
+  <td align='left'><input type='text' size="15" maxlength="64" name="resource_key"
     value="<?php echo dPformSafe($obj->resource_key);?>" /></td></tr>
   <tr><td align='right'><?php echo $AppUI->_('Resource Name'); ?></td>
-  <td align='left'><input type='text' size=30 maxlength=255 name=resource_name
+  <td align='left'><input type='text' size="30" maxlength="255" name="resource_name"
     value="<?php echo dPformSafe($obj->resource_name);?>" /></td></tr>
   <tr><td align='right'><?php echo $AppUI->_('Type'); ?></td>
-  <td align='left'><?php echo arraySelect($typelist, 'resource_type', 'class=select', $obj->resource_type);?>
+  <td align='left'><?php echo arraySelect($typelist, 'resource_type', 'class=select', $obj->resource_type, true);?>
   </td></tr>
   <tr><td align='right'><?php echo $AppUI->_('Maximum Allocation Percentage'); ?></td>
-  <td><input type='text' size=5 maxlength=5 value='<?php 
+  <td><input type='text' size="5" maxlength="5" value='<?php 
     if ($obj->resource_max_allocation)
       echo dPformSafe($obj->resource_max_allocation);
     else
       echo '100'; ?>'
     name='resource_max_allocation'></td></tr>
   <tr><td align='right'><?php echo $AppUI->_('Notes'); ?></td>
-  <td><textarea name='resource_note' cols=40 rows=5 ><?php echo dPformSafe($obj->resource_note);?></textarea>
+  <td><textarea name='resource_note' cols="40" rows="5"><?php echo dPformSafe($obj->resource_note);?></textarea>
   </table>
 </td>
 </tr>

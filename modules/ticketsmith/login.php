@@ -1,9 +1,12 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
-/* $Id: login.php,v 1.6 2004/01/28 05:47:36 ajdonnison Exp $ */
+/* $Id: login.php 6038 2010-10-03 05:49:01Z ajdonnison $ */
 
-require("modules/ticketsmith/config.inc.php");
-require("modules/ticketsmith/common.inc.php");
+require(DP_BASE_DIR.'modules/ticketsmith/config.inc.php');
+require(DP_BASE_DIR.'modules/ticketsmith/common.inc.php');
 
 /* set title */
 $title = "Ticketsmith Login";
@@ -20,9 +23,9 @@ print("</td>\n");
 print("</tr>\n");
 
 /* output content */
-print("<tr><td align=\"right\"><strong>Username</strong></td><td><input type=\"text\" name=\"login_attempt\"></td></tr>\n");
-print("<tr><td align=\"right\"><strong>Password</strong></td><td><input type=\"password\" name=\"password_attempt\"></td></tr>\n");
-print("<tr><td><br /></td><td><input type=\"submit\" value=\"Login\"> <input type=\"reset\" value=\"Clear\"></td></tr>\n");
+print("<tr><td align=\"right\"><strong>Username</strong></td><td><input type=\"text\" name=\"login_attempt\" /></td></tr>\n");
+print("<tr><td align=\"right\"><strong>Password</strong></td><td><input type=\"password\" name=\"password_attempt\" /></td></tr>\n");
+print("<tr><td><br /></td><td><input type=\"submit\" value=\"Login\"> <input type=\"reset\" value=\"Clear\" /></td></tr>\n");
 
 /* end table */
 print("</table>\n");
@@ -31,7 +34,7 @@ print("</table>\n");
 print("</form>\n");
 
 /* focus login */
-print("<script language=\"javascript\">\n");
-print("\tdocument.form.login_attempt.focus();\n");
+print('<script language="javascript" type="text/javascript">'."\n");
+print("\t".'document.form.login_attempt.focus();'."\n");
 print("</script>\n");
 ?>

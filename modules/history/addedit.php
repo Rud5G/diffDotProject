@@ -1,49 +1,47 @@
-<?php /* $Id: addedit.php,v 1.11 2005/04/12 06:05:39 gregorerhardt Exp $ */
-$history_id = defVal( @$_GET["history_id"], 0);
+<?php /* $Id: addedit.php 6065 2010-11-18 10:29:36Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
+
+$history_id = defVal(@$_GET["history_id"], 0);
 
 /*
 // check permissions
 if (!$canEdit) {
-	$AppUI->redirect( "m=public&a=access_denied" );
+	$AppUI->redirect("m=public&a=access_denied");
 }
 */
 $action = @$_REQUEST["action"];
 $q = new DBQuery;
-if($action) {
+if ($action) {
 	$history_description = dPgetParam($_POST, 'history_description', '');
 	$history_project = dPgetParam($_POST, 'history_project', '');
 	$userid = $AppUI->user_id;
 	
-	if( $action == 'add' ) {
+	if ($action == 'add') {
 		$q->addTable('history');
 		$q->addInsert('history_table', "history");
 		$q->addInsert('history_action', "add");
-		$q->addInsert( 'history_date', str_replace( "'", '', $db->DBTimeStamp( time() ) ) );
+		$q->addInsert('history_date', str_replace("'", '', $db->DBTimeStamp(time())));
 		$q->addInsert('history_description', $history_description);
 		$q->addInsert('history_user', $userid);
 		$q->addInsert('history_project', $history_project);
 		$okMsg = 'History added';
-	} else if ( $action == 'update' ) {
+	} else if ($action == 'update') {
 		$q->addTable('history');
 		$q->addUpdate('history_description', $history_description);
 		$q->addUpdate('history_project', $history_project);
 		$q->addWhere('history_id ='.$history_id);
 		$okMsg = 'History updated';
-	} else if ( $action == 'del' ) {
+	} else if ($action == 'del') {
 		$q->setDelete('history');
 		$q->addWhere('history_id ='.$history_id);
 		$okMsg = 'History deleted';				
 	}
-	if(!$q->exec()) {
-		$AppUI->setMsg( db_error() );
+	if (!$q->exec()) {
+		$AppUI->setMsg(db_error());
 	} else {	
-		$AppUI->setMsg( $okMsg );
-                if ($action == 'add')
-			$q->clear();
-			$q->addTable('history');
-			$q->addUpdate('history_item = history_id');
-			$q->addWhere('history_table = \'history\'');
-			$okMsg = 'History deleted';
+		$AppUI->setMsg($okMsg);
 	}
 	$q->clear();
 	$AppUI->redirect();
@@ -55,29 +53,28 @@ $q->addQuery('*');
 $q->addWhere('history_id ='.$history_id);
 $sql = $q->prepare();
 $q->clear();
-db_loadHash( $sql, $history );
+db_loadHash($sql, $history);
+
+$title = (($history_id) ? 'Edit History' : 'Add History');
+$titleBlock = new CTitleBlock($title, 'stock_book_blue_48.png', $m, "$m.$a");
+$titleBlock->show();
 ?>
 
 <form name="AddEdit" method="post">				
-<table width="100%" border="0" cellpadding="0" cellspacing="1">
+<div>
 <input name="action" type="hidden" value="<?php echo $history_id ? "update" : "add"  ?>">
-<tr>
-	<td><img src="./images/icons/tasks.gif" alt="" border="0"></td>
-	<td align="left" nowrap="nowrap" width="100%"><h1><?php echo $AppUI->_( $history_id ? 'Edit history' : 'New history' );?></h1></td>
-</tr>
-</table>
-
+</div>
 <table border="0" cellpadding="4" cellspacing="0" width="98%">
 <tr>
 	<td width="50%" align="right">
-		<a href="javascript:delIt()"><img align="absmiddle" src="./images/icons/trash.gif" width="16" height="16" alt="" border="0"><?php echo $AppUI->_('delete history');?></a>
+		<a href="javascript:delIt()"><img align="middle" src="./images/icons/trash.gif" width="16" height="16" alt="" border="0" alt="" /><?php echo $AppUI->_('delete history');?></a>
 	</td>
 </tr>
 </table>
 
-<table border="1" cellpadding="4" cellspacing="0" width="98%" class="std">
+<table border="1" cellpadding="4" cellspacing="0" width="98%" class="std" summary="project history">
 	
-<script>
+<script type="text/javascript">
 	function delIt() {
 		document.AddEdit.action.value = "del";
 		document.AddEdit.submit();
@@ -85,21 +82,21 @@ db_loadHash( $sql, $history );
 </script>
 	
 <tr>
-	<td align="right" nowrap="nowrap"><?php echo $AppUI->_( 'Project' );?>:</td>
+	<td align="right" nowrap="nowrap"><?php echo $AppUI->_('Project');?>:</td>
 	<td width="60%">
 <?php
 // pull the projects list
 $q->addTable('projects');
 $q->addQuery('project_id, project_name');
 $q->addOrder('project_name');
-$projects = arrayMerge( array( 0 => '('.$AppUI->_('any', UI_OUTPUT_RAW).')' ), $q->loadHashList() );
-echo arraySelect( $projects, 'history_project', 'class="text"', $history["history_project"] );
+$projects = arrayMerge(array(0 => '('.$AppUI->_('any', UI_OUTPUT_RAW).')'), $q->loadHashList());
+echo arraySelect($projects, 'history_project', 'class="text"', $history["history_project"]);
 ?>
 	</td>
 </tr>
 	
 <tr>
-	<td align="right" nowrap="nowrap"><?php echo $AppUI->_( 'Description' );?>:</td>
+	<td align="right" nowrap="nowrap"><?php echo $AppUI->_('Description');?>:</td>
 	<td width="60%">
 		<textarea name="history_description" class="textarea" cols="60" rows="5" wrap="virtual"><?php echo $history["history_description"];?></textarea>
 	</td>
@@ -112,10 +109,10 @@ echo arraySelect( $projects, 'history_project', 'class="text"', $history["histor
 		<table>
 		<tr>
 			<td>
-				<input class="button" type="button" name="cancel" value="<?php echo $AppUI->_('cancel'); ?>" onClick="javascript:if(confirm('<?php echo $AppUI->_('Are you sure you want to cancel?', UI_OUTPUT_JS); ?>')){location.href = '?<?php echo $AppUI->getPlace();?>';}">
+				<input class="button" type="button" name="cancel" value="<?php echo $AppUI->_('cancel'); ?>" onclick="javascript:if (confirm('<?php echo $AppUI->_('Are you sure you want to cancel?', UI_OUTPUT_JS); ?>')) {location.href = '?<?php echo $AppUI->getPlace();?>';}">
 			</td>
 			<td>
-				<input class="button" type="button" name="btnFuseAction" value="<?php echo $AppUI->_('save'); ?>" onClick="submit()">
+				<input class="button" type="button" name="btnFuseAction" value="<?php echo $AppUI->_('save'); ?>" onclick="javascript:submit()">
 			</td>
 		</tr>
 		</table>
@@ -125,5 +122,3 @@ echo arraySelect( $projects, 'history_project', 'class="text"', $history["histor
 	
 </table>
 </form>		
-</body>
-</html>

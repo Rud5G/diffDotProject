@@ -1,26 +1,32 @@
-<?php /* $Id: search.php,v 1.11 2004/03/10 02:03:57 gregorerhardt Exp $ */
+<?php /* $Id: search.php 6079 2010-12-04 08:12:17Z ajdonnison $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
 if (!$canRead) {
-	$AppUI->redirect( "m=public&a=access_denied" );
+	$AppUI->redirect("m=public&a=access_denied");
 }
 
 
-require("modules/ticketsmith/config.inc.php");
-require("modules/ticketsmith/common.inc.php");
-if(empty($search_pattern)) $search_pattern = "";
-if(empty($search_field)) $search_field = "";
-if(empty($search_depth)) $search_depth = "";
-if(empty($sort_column)) $sort_column = "";
+$dbprefix = dPgetConfig('dbprefix','');
+
+require(DP_BASE_DIR.'/modules/ticketsmith/config.inc.php');
+require(DP_BASE_DIR.'/modules/ticketsmith/common.inc.php');
+$search_pattern = dPgetParam($_POST,'search_param','');
+$search_field = dPgetParam($_POST,'search_field','');
+$search_depth = dPgetParam($_POST, 'search_depth','');
+$sort_colum = dPgetParam($_POST,'sort_column','');
+$sort_direction = dPgetParam($_POST,'sort_direction', 'DESC');
 /* set title */
 $title = "Search Tickets";
 
 /* start form */
-print("<form name='ticketform' action=index.php?m=ticketsmith&a=search method=\"post\">\n");
+print("<form name='ticketform' action='?m=ticketsmith&amp;a=search' method='post'>\n");
 
 /* start table */
-print("<table class=maintable bgcolor=\"#eeeeee\" width=95%>\n");
+print("<table class='maintable' bgcolor='#eeeeee' width='95%'>\n");
 print("<tr>\n");
-print("<td colspan=\"2\" align=\"center\" bgcolor=#878676 width=100%>\n");
+print("<td colspan='2' align='center' bgcolor='#878676' width='100%'>\n");
 print("<div class=\"heading\">".$AppUI->_($title)."</div>\n");
 print("</td>\n</tr>\n");
 
@@ -39,7 +45,7 @@ print("</td>\n");
 print("</tr>\n");
 
 /* pattern select */
-$search_pattern = dPformSafe( $search_pattern, true );
+$search_pattern = dPformSafe($search_pattern);
 print("<tr>\n");
 print("<td align=\"right\"><strong>".$AppUI->_('Pattern')."</strong></td>\n");
 print("<td><input type=\"text\" name=\"search_pattern\" value=\"$search_pattern\"></td>\n");
@@ -75,21 +81,21 @@ $sort_choices = array("ticket"     => $AppUI->_("Ticket"),
 
 $sort_selectbox = create_selectbox("sort_column", $sort_choices, $sort_column);
 print($sort_selectbox);
-print(" <input type=\"radio\" name=\"sort_direction\" value=\"ASC\"> ".$AppUI->_('Ascending'));
-print(" <input type=\"radio\" name=\"sort_direction\" value=\"DESC\" checked> ".$AppUI->_('Descending'));
+print(" <input type=\"radio\" name=\"sort_direction\" value=\"ASC\"". ($sort_direction == 'ASC' ? ' checked="checked"') ." /> ".$AppUI->_('Ascending'));
+print(" <input type=\"radio\" name=\"sort_direction\" value=\"DESC\"".($sort_direction != 'ASC' ? ' checked="checked"') . " /> ".$AppUI->_('Descending'));
 print("</td>\n");
 print("</tr>\n");
 
 /* submit button */
 print("<tr>\n");
 print("<td><br /></td>\n");
-print('<td><input type="submit" value="'.$AppUI->_('Search').'"></td>');
+print('<td><input type="submit" value="'.$AppUI->_('Search').'" /></td>');
 print("</tr>\n");
 
 /* output footer */
 print("<tr>\n");
 print("<td><br /></td>\n");
-print("<td><a href=index.php?m=ticketsmith>".$AppUI->_('Return to ticket list')."</a></td>\n");
+print("<td><a href='?m=ticketsmith'>".$AppUI->_('Return to ticket list')."</a></td>\n");
 print("</tr>\n");
 
 /* end table */
@@ -109,11 +115,11 @@ if ($search_pattern) {
     /* form search query */
     $select_columns = join(", ", $fields["columns"]);
     $search_pattern = "%" . escape_string($search_pattern) . "%";
-    $query = "SELECT $select_columns FROM tickets WHERE $search_field LIKE '$search_pattern'";
+    $query = "SELECT $select_columns FROM {$dbprefix}tickets WHERE $search_field LIKE '$search_pattern'";
     if ($search_depth == "Child") {
         $query .= " AND parent != 0";
     }
-    elseif ($search_depth != "All") {
+    else if ($search_depth != "All") {
         $query .= " AND type = '$search_depth'";
     }
     $query .= " ORDER BY $sort_column $sort_direction";

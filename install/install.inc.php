@@ -1,12 +1,16 @@
 <?php
-// $Id: install.inc.php,v 1.2 2005/04/09 04:07:35 ajdonnison Exp $
+// $Id: install.inc.php 6048 2010-10-06 10:01:39Z ajdonnison $
+
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
 
 // Provide fake interface classes and installation functions
 // so that most db shortcuts will work without, for example, an AppUI instance.
 
 // Defines required by setMsg, these are different to those used by the real CAppUI.
 
-define( 'UI_MSG_OK', '');
+define('UI_MSG_OK', '');
 define('UI_MSG_ALERT', 'Warning: ');
 define('UI_MSG_WARNING', 'Warning: ');
 define('UI_MSG_ERROR', 'ERROR: ');
@@ -34,8 +38,8 @@ function InstallDefVal($var, $def) {
 /**
 * Utility function to return a value from a named array or a specified default
 */
-function dPInstallGetParam( &$arr, $name, $def=null ) {
- return isset( $arr[$name] ) ? $arr[$name] : $def;
+function dPInstallGetParam(&$arr, $name, $def=null) {
+ return isset($arr[$name]) ? $arr[$name] : $def;
 }
 
 /**
@@ -43,21 +47,20 @@ function dPInstallGetParam( &$arr, $name, $def=null ) {
 * system.  The default is to 
 */
 function InstallGetVersion($mode, $db) {
+ global $dbprefix;
  $result = array(
   'last_db_update' => '',
   'last_code_update' => '',
   'code_version' => '1.0.2',
   'db_version' => '1'
- );
- if ($mode == 'upgrade') {
-  $res = $db->Execute('SELECT * FROM dpversion LIMIT 1');
-  if ($res && $res->RecordCount() > 0) {
+);
+ $res = $db->Execute('SELECT * FROM '.$dbprefix.'dpversion LIMIT 1');
+ if ($res && $res->RecordCount() > 0) {
    $row = $res->FetchRow();
    $result['last_db_update'] = str_replace('-', '', $row['last_db_update']);
    $result['last_code_update'] = str_replace('-', '', $row['last_code_update']);
    $result['code_version'] = $row['code_version'] ? $row['code_version'] : '1.0.2';
    $result['db_version'] = $row['db_version'] ? $row['db_version'] : '1';
-  }
  }
  return $result;
 
@@ -102,30 +105,30 @@ function InstallSplitSql($sql, $last_update) {
     return $ret;
   }
  }
- $sql = ereg_replace("\n#[^\n]*\n", "\n", $sql);
+ $sql = preg_replace("/\n#[^\n]*\n/", "\n", $sql);
 
  $in_string = false;
 
- for($i=0; $i<strlen($sql)-1; $i++) {
-  if($sql[$i] == ";" && !$in_string) {
+ for ($i=0; $i<mb_strlen($sql)-1; $i++) {
+  if ($sql[$i] == ";" && !$in_string) {
    $ret[] = substr($sql, 0, $i);
    $sql = substr($sql, $i + 1);
    $i = 0;
   }
 
-  if($in_string && ($sql[$i] == $in_string) && $buffer[1] != "\\") {
+  if ($in_string && ($sql[$i] == $in_string) && $buffer[1] != "\\") {
    $in_string = false;
   }
-  elseif(!$in_string && ($sql[$i] == '"' || $sql[$i] == "'") && (!isset($buffer[0]) || $buffer[0] != "\\")) {
+  else if (!$in_string && ($sql[$i] == '"' || $sql[$i] == "'") && (!isset($buffer[0]) || $buffer[0] != "\\")) {
    $in_string = $sql[$i];
   }
-  if(isset($buffer[1])) {
+  if (isset($buffer[1])) {
    $buffer[0] = $buffer[1];
   }
   $buffer[1] = $sql[$i];
  }
 
- if(!empty($sql)) {
+ if (!empty($sql)) {
   $ret[] = $sql;
  }
  return($ret);
@@ -133,7 +136,7 @@ function InstallSplitSql($sql, $last_update) {
 
 function InstallLoadSQL($sqlfile, $last_update = null)
 {
- global $dbErr, $dbMsg, $db;
+ global $dbErr, $dbMsg, $db, $dbprefix;
 
  // Don't complain about missing files.
  if (! file_exists($sqlfile))
@@ -154,11 +157,12 @@ function InstallLoadSQL($sqlfile, $last_update = null)
 
  for ($i=0; $i<$piece_count; $i++) {
   $pieces[$i] = trim($pieces[$i]);
-  if(!empty($pieces[$i]) && $pieces[$i] != "#") {
+  if (!empty($pieces[$i]) && $pieces[$i] != "#") {
+   $pieces[$i] = str_replace('%dbprefix%',$dbprefix,$pieces[$i]);
    if (!$result = $db->Execute($pieces[$i])) {
     $errors++;
     $dbErr = true;
-    $dbMsg .= $db->ErrorMsg().'<br>';
+    $dbMsg .= $db->ErrorMsg().'<br />';
    }
   }
  }

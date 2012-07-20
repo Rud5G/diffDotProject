@@ -1,5 +1,8 @@
 <?php
-// $Id: authenticator.class.php,v 1.13 2005/04/15 11:32:03 mosen Exp $
+// $Id: authenticator.class.php 6070 2010-11-23 04:22:12Z ajdonnison $
+if (!defined('DP_BASE_DIR')) {
+	die('You should not access this file directly.');
+}
 
 	/*
 	 *	Authenticator Class
@@ -19,8 +22,20 @@
 				$auth = new PostNukeAuthenticator();
 				return $auth;
 				break;
+			case 'ip':
+				$auth = new IPAuthenticator();
+				return $auth;
+				break;
 			default:
-				$auth = new SQLAuthenticator();
+				// Try loading the authenticator class
+				$auth_mode = preg_replace('/[^a-z0-9_-]/i', '', $auth_mode);
+				@include_once(DP_BASE_DIR.'/classes/auth.'.$auth_mode.'.class.php');
+				$classname = $auth_mode . 'Authenticator';
+				if (class_exists($classname)) {
+					$auth = new $classname();
+				} else {
+					$auth = new SQLAuthenticator();
+				}
 				return $auth;
 				break;
 		}
@@ -80,7 +95,7 @@
 			if (! $rs = $q->exec()) {
 				die($AppUI->_('Failed to get user details') . ' - error was ' . $db->ErrorMsg());
 			}
-			if ( $rs->RecordCount() < 1) {
+			if ($rs->RecordCount() < 1) {
 				$q->clear();
 				$this->createsqluser($username, $passwd, $email, $first_name, $last_name);
 			} else {
@@ -128,7 +143,7 @@
 
 			$q  = new DBQuery;
 			$q->addTable('users');
-			$q->addInsert('user_username',$username );
+			$q->addInsert('user_username',$username);
 			$q->addInsert('user_password', $password);
 			$q->addInsert('user_type', '1');
 			$q->addInsert('user_contact', $c->contact_id);
@@ -212,7 +227,7 @@
 			GLOBAL $dPconfig;
 			$this->username = $username;
 
-			if (strlen($password) == 0) return false; // LDAP will succeed binding with no password on AD (defaults to anon bind)
+			if (mb_strlen($password) == 0) return false; // LDAP will succeed binding with no password on AD (defaults to anon bind)
 			if ($this->fallback == true)
 			{
 				if (parent::authenticate($username, $password)) return true;	
@@ -227,9 +242,10 @@
 			@ldap_set_option($rs, LDAP_OPT_REFERRALS, 0);
 
 			//$ldap_bind_dn = "cn=".$this->ldap_search_user.",".$this->base_dn;
-			$ldap_bind_dn = $this->ldap_search_user;	
+			$ldap_bind_dn = empty($this->ldap_search_user) ? NULL : $this->ldap_search_user;	
+			$ldap_bind_pw = empty($this->ldap_search_pass) ? NULL : $this->ldap_search_pass;
 
-			if (!$bindok = @ldap_bind($rs, $ldap_bind_dn, $this->ldap_search_pass))
+			if (!$bindok = @ldap_bind($rs, $ldap_bind_dn, $ldap_bind_pw))
 			{
 				// Uncomment for LDAP debugging
 				/*	
@@ -240,7 +256,7 @@
 			}
 			else
 			{
-				$filter_r = str_replace("%USERNAME%", $username, $this->filter);
+				$filter_r = html_entity_decode(str_replace("%USERNAME%", $username, $this->filter), ENT_COMPAT, 'UTF-8');
 				$result = @ldap_search($rs, $this->base_dn, $filter_r);
 				if (!$result) return false; // ldap search returned nothing or error
 				
@@ -330,7 +346,7 @@
 
 			$q  = new DBQuery;
 			$q->addTable('users');
-			$q->addInsert('user_username',$username );
+			$q->addInsert('user_username',$username);
 			$q->addInsert('user_password', $hash_pass);
 			$q->addInsert('user_type', '1');
 			$q->addInsert('user_contact', $c->contact_id);
@@ -345,5 +361,25 @@
 
 	}
 
+	class IPAuthenticator extends SQLAuthenticator
+	{
+		function authenticate($username, $password)
+		{
+			$ret = parent::authenticate($username, $password);
+			if ($ret == false) {
+				return false;
+			}
 
-?>
+			$q  = new DBQuery;
+			$q->addTable('user_ip_lock');
+			$q->addQuery('user_id');
+			$q->addWhere("user_id = {$this->user_id}");
+			$q->addWhere("user_ip = '{$_SERVER['REMOTE_ADDR']}'");
+			$row = $q->loadResult();
+			if ($row) {
+				return false;
+			}
+
+			return true;
+		}
+	}

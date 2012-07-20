@@ -1,13 +1,16 @@
 <?php
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
+}
 
 // Grab a list of the other resources, determine how they are allocated,
 // and if there is a clash between this and other tasks.
 global $AppUI, $task_id, $obj;
 
 require_once $AppUI->getModuleClass('resources');
-$resource =& new CResource;
+$resource = new CResource;
 
-$q =& new DBQuery;
+$q = new DBQuery;
 $q->addQuery('a.*');
 $q->addQuery('b.percent_allocated');
 $q->addQuery('c.resource_type_name');
@@ -33,7 +36,7 @@ if (count($resources)) {
 }
 
 ?>
-<table class='std' width='100%' cellpadding=4 cellspacing=1>
+<table class='std' width='100%' cellpadding="4" cellspacing="1">
 <tr><th>Type</th><th>Resource</th><th>Allocation</th><th>&nbsp;</th></tr>
 <?php
 foreach ($resources as $res) {

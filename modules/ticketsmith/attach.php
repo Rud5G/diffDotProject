@@ -1,19 +1,21 @@
 <?php
-
-if (!$canEdit) {
-	$AppUI->redirect( "m=public&a=access_denied" );
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly.');
 }
 
-$ticket = dPgetParam( $_GET, 'ticket', '');
+if (!$canEdit) {
+	$AppUI->redirect("m=public&a=access_denied");
+}
 
-$titleBlock = new CTitleBlock( 'Link Ticket', 'gconf-app-icon.php', $m, "$m.$a");
-$titleBlock->addCrumb( "?m=ticketsmith", "tickets list" );
+$ticket = dPgetParam($_GET, 'ticket', '');
+$dbprefix = dPgetConfig('dbprefix', '');
+
+$titleBlock = new CTitleBlock('Link Ticket', 'gconf-app-icon.php', $m, "$m.$a");
+$titleBlock->addCrumb("?m=ticketsmith", "tickets list");
 $titleBlock->show();
 
-require("./modules/ticketsmith/config.inc.php");
-require("./modules/ticketsmith/common.inc.php");
-
-$app_root = dPgetConfig( 'base_url' );
+require(DP_BASE_DIR."/modules/ticketsmith/config.inc.php");
+require(DP_BASE_DIR."/modules/ticketsmith/common.inc.php");
 
 /* setup table & database field stuff */
 $fields = array("headings" => array("Link", "Author", "Subject", "Date", 
@@ -36,9 +38,8 @@ $offset = @$offset ? $offset : 0;
 $limit = @$limit ? $limit : $CONFIG["view_rows"];
 
 
-
 /* count tickets */
-$query = "SELECT COUNT(*) FROM tickets WHERE parent = '0' and ticket != $ticket";
+$query = "SELECT COUNT(*) FROM {$dbprefix}tickets WHERE parent = '0' and ticket != $ticket";
 if ($type != 'All') {
     $query .= " AND type = '$type'";
 }
@@ -57,7 +58,7 @@ $title = "Assign ticket to parent";
 ?>
 <table class="tbl" width="100%">
 <tr>
-	<td colspan="<?php echo count( $fields["headings"] );?>" align="center">
+	<td colspan="<?php echo count($fields["headings"]);?>" align="center">
 		<table width="100%" border="0" cellspacing="1" cellpadding="1">
 		<tr>
 			<td width="33%"></td>
@@ -67,11 +68,13 @@ $title = "Assign ticket to parent";
 
 if ($ticket_count > $limit) {
     if ($offset - $limit >= 0) {
-        print("<a href=index.php?m=ticketsmith&type=$type&column=$column&direction=$direction&offset=" . ($offset - $limit) . "><img src=modules/ticketsmith/images/ltwt.gif border=0></a> | \n");
+        print("<a href='?m=ticketsmith&amp;type=$type&amp;column=$column&amp;direction=$direction&amp;offset="
+				. ($offset - $limit) . "'><img src='modules/ticketsmith/images/ltwt.gif' border='0' /></a> | \n");
     }
     print("$page_string\n");
     if ($offset + $limit < $ticket_count) {
-        print(" | <a href=index.php?m=ticketsmith&type=$type&column=$column&direction=$direction&offset=" . ($offset + $limit) . "><img src=modules/ticketsmith/images/rtwt.gif border=0></a>\n");
+        print(" | <a href='?m=ticketsmith&amp;type=$type&amp;column=$column&amp;direction=$direction&amp;offset="
+				. ($offset + $limit) . "'><img src='modules/ticketsmith/images/rtwt.gif' border='0' /></a>\n");
     }
 }
 ?>
@@ -84,11 +87,11 @@ if ($ticket_count > $limit) {
 <?php
 /* form query */
 $select_fields= join(", ", $fields["columns"]);
-$query = "SELECT $select_fields FROM tickets WHERE ";
+$query = "SELECT $select_fields FROM {$dbprefix}tickets WHERE ";
 if ($type == "My") {
     $query .= "type = 'Open' AND (assignment = '$user_cookie' OR assignment = '0') AND ";
 }
-elseif ($type != "All") {
+else if ($type != "All") {
     $query .= "type = '$type' AND ";
 }
 $query .= "ticket != $ticket AND ";
@@ -103,8 +106,8 @@ if ($parent_count) {
     print("<tr>\n");
     for ($loop = 0; $loop < count($fields["headings"]); $loop++) {
         print("<td  align=" . $fields["aligns"][$loop] . ">");
-        print("<a href=index.php?m=ticketsmith&type=$type");
-        print("&column=" . $fields["columns"][$loop]);
+        print("<a href='?m=ticketsmith&amp;type=$type");
+        print("&amp;column=" . $fields["columns"][$loop]);
         if ($column != $fields["columns"][$loop]) {
             $new_direction = "ASC";
         }
@@ -116,14 +119,14 @@ if ($parent_count) {
                 $new_direction == "ASC";
             }
         }
-        print("&direction=$new_direction");
-        print("><b>" . $AppUI->_($fields["headings"][$loop]) . "</b></a></td>\n");
+        print("&amp;direction=$new_direction");
+        print("'><b>" . $AppUI->_($fields["headings"][$loop]) . "</b></a></td>\n");
     }
     print("</tr>\n");
     while ($row = result2hash($result)) {
-        print("<tr height=25>\n");
+        print("<tr height='25'>\n");
         for ($loop = 0; $loop < count($fields["headings"]); $loop++) {
-            print("<td  bgcolor=white align=" . $fields["aligns"][$loop] . ">\n");
+            print("<td  bgcolor='white' align='" . $fields["aligns"][$loop] . "'>\n");
 	        print(format_field($row[$fields["columns"][$loop]], $fields["types"][$loop], $ticket) . "\n");
             print("</td>\n");
         }
@@ -131,10 +134,10 @@ if ($parent_count) {
     }
 }
  else {
-    print("<tr height=25>\n");
-    print("<td align=center colspan=" . count($fields["headings"]) . ">\n");
+    print("<tr style='height:25px;'>\n");
+    print("<td align='center' colspan='" . count($fields["headings"]) . "'>\n");
     print($AppUI->_('There are no')." ");
-    print($type == "All" ? "" : strtolower($AppUI->_($type)) . " ");
+    print($type == "All" ? "" : mb_strtolower($AppUI->_($type)) . " ");
     print($AppUI->_('tickets').".\n");
     print("</td>\n");
     print("</tr>\n");
@@ -143,20 +146,22 @@ if ($parent_count) {
 /* output action links */
 print("<tr>\n");
 print("<td><br></td>\n");
-print("<td colspan=" . (count($fields["headings"]) - 1) . " align=right>\n");
-print("<table width=100% border=0 cellspacing=0 cellpadding=0>\n");
-print("<tr height=25><td align=left>");
+print("<td colspan='" . (count($fields["headings"]) - 1) . "' align='right'>\n");
+print("<table width='100%' border='0' cellspacing='0' cellpadding='0'>\n");
+print("<tr style='height:25px;'><td align='left'>");
 $types = array("My","Open","Closed","Deleted","All");
 for ($loop = 0; $loop < count($types); $loop++) {
-    $toggles[] = "<a href=index.php?m=ticketsmith&type=" . $types[$loop] . ">" . $AppUI->_($types[$loop]) . "</a>";
+    $toggles[] = "<a href='?m=ticketsmith&amp;type=" . $types[$loop] . "'>"
+				. $AppUI->_($types[$loop]) . "</a>";
 }
 print(join(" | ", $toggles));
 print(" ".$AppUI->_('Tickets')."</td>\n");
 if ($type == "Deleted" && $parent_count) {
-    print("<td align=center><a href=index.php?m=ticketsmith&type=Deleted&action=expunge>".$AppUI->_('Expunge Deleted')."</a></td>");
+    print("<td align='center'><a href='?m=ticketsmith&amp;type=Deleted&amp;action=expunge'>"
+			.$AppUI->_('Expunge Deleted')."</a></td>");
 }
-print("<td align=right><a href=index.php?m=ticketsmith&a=search>".$AppUI->_('Search')."</a> |
-<a href=index.php?m=ticketsmith&type=$type>".$AppUI->_('Back to top')."</a></td></tr>\n");
+print("<td align='right'><a href='?m=ticketsmith&amp;a=search'>".$AppUI->_('Search')."</a> |
+<a href='?m=ticketsmith&amp;type=$type'>".$AppUI->_('Back to top')."</a></td></tr>\n");
 print("</table>\n");
 print("</td>\n");
 print("</tr>\n");    

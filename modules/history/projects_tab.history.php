@@ -1,3 +1,8 @@
-<?php /* PROJECTS $Id: projects_tab.history.php,v 1.1 2005/03/08 14:23:09 cyberhorse Exp $ */
-require( dPgetConfig('root_dir') . '/modules/history/index.php' );
+<?php /* PROJECTS $Id: projects_tab.history.php 5881 2009-05-07 17:10:40Z merlinyoda $ */
+if (!defined('DP_BASE_DIR')) {
+  die('You should not access this file directly');
+}
+
+$m = 'history';
+require(DP_BASE_DIR . '/modules/history/index.php');
 ?>
